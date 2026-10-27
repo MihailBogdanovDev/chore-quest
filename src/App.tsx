@@ -12,6 +12,7 @@ import {
 } from './data'
 import { KidHome } from './ui/KidHome'
 import { KidJoin } from './ui/KidJoin'
+import { PasswordForm } from './ui/PasswordForm'
 import { ParentHome } from './ui/ParentHome'
 import { ParentSetup } from './ui/ParentSetup'
 import { Welcome } from './ui/Welcome'
@@ -22,12 +23,21 @@ const TICK_MS = 30_000
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
   const [me, setMe] = useState<Member | null | undefined>(undefined)
+  // Kept apart from the session: later auth events for the same user must not hide the form.
+  const [recovering, setRecovering] = useState(false)
 
   const loadMe = useCallback(() => {
     getMe().then(setMe, () => setMe(null))
   }, [])
 
-  useEffect(() => onAuthChange(setSession), [])
+  useEffect(
+    () =>
+      onAuthChange((s) => {
+        setSession(s)
+        if (s?.recovery) setRecovering(true)
+      }),
+    [],
+  )
 
   // Keyed on the user id: token refreshes emit a new session object for the same user,
   // and reloading on those would remount the screen and wipe half-typed forms.
@@ -39,6 +49,14 @@ export default function App() {
 
   if (session === undefined) return null
   if (session === null) return <Welcome onKid={signInAsKid} />
+  if (recovering) {
+    return (
+      <main className="screen">
+        <h1>Set a new password</h1>
+        <PasswordForm onSaved={() => setRecovering(false)} />
+      </main>
+    )
+  }
   if (me === undefined) return null
   if (me === null) return session.anonymous ? <KidJoin onJoined={loadMe} /> : <ParentSetup onDone={loadMe} />
   return me.role === 'parent' ? <ParentHome /> : <KidRoot me={me} />

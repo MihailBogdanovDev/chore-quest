@@ -24,7 +24,7 @@ npx supabase status       # paste the publishable key into .env.local
 npm run dev
 ```
 
-Magic-link emails land in Mailpit at http://127.0.0.1:54324. To try a parent and a kid
+Confirmation and password-reset emails land in Mailpit at http://127.0.0.1:54324. To try a parent and a kid
 at once, open the parent on `http://localhost:5173` and the kid on
 `http://127.0.0.1:5173`: separate origins keep separate sessions.
 

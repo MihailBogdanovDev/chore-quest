@@ -1,20 +1,11 @@
-import { useState, type FormEvent } from 'react'
-import { sendMagicLink } from '../data'
+import { useState } from 'react'
+import { ParentAuth } from './ParentAuth'
 import './screens.css'
 import { useAction } from './useAction'
 
 export function Welcome({ onKid }: { onKid: () => Promise<void> }) {
-  const [mode, setMode] = useState<'pick' | 'parent' | 'sent'>('pick')
-  const [email, setEmail] = useState('')
+  const [mode, setMode] = useState<'pick' | 'parent'>('pick')
   const { run, busy, error } = useAction()
-
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
-    run(async () => {
-      await sendMagicLink(email)
-      setMode('sent')
-    })
-  }
 
   return (
     <main className="screen">
@@ -31,18 +22,13 @@ export function Welcome({ onKid }: { onKid: () => Promise<void> }) {
         </div>
       )}
       {mode === 'parent' && (
-        <form className="stack" onSubmit={submit}>
-          <label>
-            Email
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-          </label>
-          <button className="big" disabled={busy}>
-            Send magic link
+        <>
+          <ParentAuth />
+          <button className="link" onClick={() => setMode('pick')}>
+            Back
           </button>
-          {error && <p role="alert">{error}</p>}
-        </form>
+        </>
       )}
-      {mode === 'sent' && <p>Check your email for a sign-in link.</p>}
     </main>
   )
 }

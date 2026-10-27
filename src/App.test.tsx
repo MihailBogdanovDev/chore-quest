@@ -8,6 +8,7 @@ vi.mock('./data', () => ({
   getMe: vi.fn(),
   createFamily: vi.fn(),
   signInAsKid: vi.fn(),
+  updatePassword: vi.fn(),
 }))
 vi.mock('./game/createGame', () => ({ createGame: vi.fn() }))
 
@@ -27,4 +28,19 @@ test('repeated auth events for the same user do not reload the screen', async ()
   await act(async () => emit({ userId: 'u1', anonymous: false }))
   expect(data.getMe).toHaveBeenCalledTimes(1)
   expect(screen.getByRole('heading', { name: 'Start your family' })).toBeInTheDocument()
+})
+
+test('password recovery link shows the set-password screen', async () => {
+  let emit: (s: data.Session | null) => void = () => {}
+  vi.mocked(data.onAuthChange).mockImplementation((cb) => {
+    emit = cb
+    return () => {}
+  })
+  vi.mocked(data.getMe).mockResolvedValue(null)
+  render(<App />)
+  await act(async () => emit({ userId: 'u1', anonymous: false, recovery: true }))
+  expect(await screen.findByRole('heading', { name: 'Set a new password' })).toBeInTheDocument()
+  // A later token refresh must not hide the form.
+  await act(async () => emit({ userId: 'u1', anonymous: false }))
+  expect(screen.getByRole('heading', { name: 'Set a new password' })).toBeInTheDocument()
 })

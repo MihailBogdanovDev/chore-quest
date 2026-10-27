@@ -7,7 +7,10 @@ import { ParentSetup } from './ParentSetup'
 import { Welcome } from './Welcome'
 
 vi.mock('../data', () => ({
-  sendMagicLink: vi.fn(),
+  signInWithPassword: vi.fn(),
+  signUp: vi.fn(),
+  sendPasswordReset: vi.fn(),
+  updatePassword: vi.fn(),
   createFamily: vi.fn(),
   getFamily: vi.fn(),
   listKids: vi.fn(),
@@ -30,14 +33,10 @@ beforeEach(() => {
   vi.mocked(data.subscribeFamily).mockReturnValue(() => {})
 })
 
-test('parent asks for a magic link', async () => {
-  vi.mocked(data.sendMagicLink).mockResolvedValue()
+test('parent button opens the login screen', async () => {
   render(<Welcome onKid={vi.fn()} />)
   await userEvent.click(screen.getByRole('button', { name: "I'm a parent" }))
-  await userEvent.type(screen.getByLabelText('Email'), 'mum@example.com')
-  await userEvent.click(screen.getByRole('button', { name: 'Send magic link' }))
-  expect(data.sendMagicLink).toHaveBeenCalledWith('mum@example.com')
-  expect(await screen.findByText(/Check your email/)).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Log in' })).toBeInTheDocument()
 })
 
 test('kid button hands off to the kid flow', async () => {
@@ -54,15 +53,6 @@ test('kid sign-in errors are shown', async () => {
   expect(await screen.findByRole('alert')).toHaveTextContent('Anonymous sign-ins are disabled')
 })
 
-test('magic link errors are shown', async () => {
-  vi.mocked(data.sendMagicLink).mockRejectedValue(new Error('rate limited'))
-  render(<Welcome onKid={vi.fn()} />)
-  await userEvent.click(screen.getByRole('button', { name: "I'm a parent" }))
-  await userEvent.type(screen.getByLabelText('Email'), 'mum@example.com')
-  await userEvent.click(screen.getByRole('button', { name: 'Send magic link' }))
-  expect(await screen.findByRole('alert')).toHaveTextContent('rate limited')
-})
-
 test('parent creates a family', async () => {
   vi.mocked(data.createFamily).mockResolvedValue()
   const onDone = vi.fn()
@@ -72,6 +62,12 @@ test('parent creates a family', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Create family' }))
   expect(data.createFamily).toHaveBeenCalledWith('The Bogdanovs', 'Mihail')
   expect(onDone).toHaveBeenCalled()
+})
+
+test('setup screen lets a parent sign out of the wrong account', async () => {
+  render(<ParentSetup onDone={vi.fn()} />)
+  await userEvent.click(screen.getByRole('button', { name: 'Sign out' }))
+  expect(data.signOut).toHaveBeenCalled()
 })
 
 test('parent home shows invite code and kids, and adds a kid', async () => {
