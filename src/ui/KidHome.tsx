@@ -15,6 +15,7 @@ type Panel = { type: 'list' } | { type: 'quest'; id: string } | null
 
 /** "25P → 22P in 3h": what the quest is worth now and when that drops. */
 function worthText(q: Quest, now: number): string {
+  if (q.status === 'done' && q.claimedAt !== null) return `Slain! +${pointsAt(q, q.claimedAt)}P`
   if (q.status === 'claimed' && q.claimedAt !== null) return `${pointsAt(q, q.claimedAt)}P locked in`
   const points = pointsAt(q, now)
   const drop = nextDrop(q, now)
@@ -106,9 +107,9 @@ export function KidHome({ quests, lifetimePoints, walletPoints, now, onClaim }: 
                   <button className="slay" onClick={() => onClaim(selected.id)}>
                     Slay!
                   </button>
-                ) : (
+                ) : selected.status === 'claimed' ? (
                   <p className="waiting">Waiting for a parent to check</p>
-                )}
+                ) : null}
               </>
             )}
           </section>
