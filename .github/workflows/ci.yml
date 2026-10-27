@@ -19,6 +19,7 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      - run: node scripts/check-sw.mjs
 
   db:
     runs-on: ubuntu-latest

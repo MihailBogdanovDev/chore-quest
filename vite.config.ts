@@ -34,6 +34,10 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // The plugin only adds these for autoUpdate when it injects the register script itself;
+        // with injectRegister: false they must be set here, or a new worker waits until every tab closes.
+        skipWaiting: true,
+        clientsClaim: true,
         // Phaser makes the main chunk bigger than Workbox's 2 MB default.
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         navigateFallback: '/index.html',
