@@ -1,0 +1,166 @@
+.kid-home {
+  max-width: 420px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: #2b2d42;
+  color: #f8f4e3;
+  font-family: 'Courier New', ui-monospace, monospace;
+  position: relative;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+}
+
+.points {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #ffd166;
+}
+
+.tier {
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.quest-button {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border: 3px solid #f8f4e3;
+  background: #ef476f;
+  color: #fff;
+  font: bold 1.4rem inherit;
+  cursor: pointer;
+}
+
+.badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 20px;
+  padding: 0 4px;
+  background: #ffd166;
+  color: #2b2d42;
+  font-size: 0.75rem;
+  border-radius: 10px;
+}
+
+.scene {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  image-rendering: pixelated;
+}
+
+.scene canvas {
+  display: block;
+}
+
+.hp {
+  padding: 12px 16px;
+}
+
+.hp-bar {
+  height: 16px;
+  border: 3px solid #f8f4e3;
+  background: #1d1e2c;
+}
+
+.hp-fill {
+  height: 100%;
+  background: #06d6a0;
+  transition: width 0.4s steps(8);
+}
+
+.band-dirty .hp-fill { background: #ffd166; }
+.band-cracked .hp-fill { background: #f78c6b; }
+.band-wrecked .hp-fill,
+.band-ruined .hp-fill { background: #ef476f; }
+
+.hp-label {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.85rem;
+}
+
+.bottom-bar {
+  margin-top: auto;
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  border-top: 3px solid #44475a;
+}
+
+.home-button {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid #f8f4e3;
+  background: transparent;
+  cursor: pointer;
+}
+
+.sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.5);
+  display: flex;
+  align-items: flex-end;
+}
+
+.sheet {
+  width: 100%;
+  padding: 16px 16px 32px;
+  background: #f8f4e3;
+  color: #2b2d42;
+  border-top: 4px solid #2b2d42;
+}
+
+.sheet h2 {
+  margin: 0 0 8px;
+}
+
+.quest-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.quest-list button {
+  width: 100%;
+  text-align: left;
+  padding: 12px;
+  border: 3px solid #2b2d42;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.quest-list small {
+  display: block;
+  opacity: 0.7;
+}
+
+.worth {
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.slay {
+  width: 100%;
+  padding: 14px;
+  border: 3px solid #2b2d42;
+  background: #ef476f;
+  color: #fff;
+  font: bold 1.3rem inherit;
+  cursor: pointer;
+}

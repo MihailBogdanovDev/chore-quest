@@ -7,6 +7,7 @@ export const HEIGHT = 240
 const GROUND_Y = 190
 const BASE_X = 100
 const MONSTER_RADIUS = 14
+const MIN_TAP = 36
 
 /** Draws one kid's base with the monsters attacking it. Knows nothing about data loading. */
 export class HomeScene extends Phaser.Scene {
@@ -114,7 +115,9 @@ export class HomeScene extends Phaser.Scene {
     if (m.size === 'L') body.fillStyle(0xffffff).fillTriangle(-r * 0.7, -r * 0.7, -r * 0.5, -r * 1.2, -r * 0.3, -r * 0.8)
     c.add(body)
 
-    c.setSize(r * 2, r * 2).setInteractive({ useHandCursor: true })
+    // Small monsters still get a finger-sized tap target.
+    const hit = Math.max(r * 2, MIN_TAP)
+    c.setSize(hit, hit).setInteractive({ useHandCursor: true })
     c.on('pointerdown', () => this.onMonsterTap(m.questId))
     if (m.claimed) c.setAlpha(0.5)
     else this.tweens.add({ targets: c, y: y - 3, duration: 500 + index * 70, yoyo: true, repeat: -1 })
