@@ -3,7 +3,7 @@ import { sendMagicLink } from '../data'
 import './screens.css'
 import { useAction } from './useAction'
 
-export function Welcome({ onKid }: { onKid: () => void }) {
+export function Welcome({ onKid }: { onKid: () => Promise<void> }) {
   const [mode, setMode] = useState<'pick' | 'parent' | 'sent'>('pick')
   const [email, setEmail] = useState('')
   const { run, busy, error } = useAction()
@@ -24,9 +24,10 @@ export function Welcome({ onKid }: { onKid: () => void }) {
           <button className="big" onClick={() => setMode('parent')}>
             I'm a parent
           </button>
-          <button className="big alt" onClick={onKid}>
+          <button className="big alt" disabled={busy} onClick={() => run(onKid)}>
             I'm a kid
           </button>
+          {error && <p role="alert">{error}</p>}
         </div>
       )}
       {mode === 'parent' && (

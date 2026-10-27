@@ -38,7 +38,7 @@ export default function App() {
   }, [userId, loadMe])
 
   if (session === undefined) return null
-  if (session === null) return <Welcome onKid={() => void signInAsKid()} />
+  if (session === null) return <Welcome onKid={signInAsKid} />
   if (me === undefined) return null
   if (me === null) return session.anonymous ? <KidJoin onJoined={loadMe} /> : <ParentSetup onDone={loadMe} />
   return me.role === 'parent' ? <ParentHome /> : <KidRoot me={me} />

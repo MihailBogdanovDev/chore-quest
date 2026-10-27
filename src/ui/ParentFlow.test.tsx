@@ -47,6 +47,13 @@ test('kid button hands off to the kid flow', async () => {
   expect(onKid).toHaveBeenCalled()
 })
 
+test('kid sign-in errors are shown', async () => {
+  const onKid = vi.fn().mockRejectedValue(new Error('Anonymous sign-ins are disabled'))
+  render(<Welcome onKid={onKid} />)
+  await userEvent.click(screen.getByRole('button', { name: "I'm a kid" }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Anonymous sign-ins are disabled')
+})
+
 test('magic link errors are shown', async () => {
   vi.mocked(data.sendMagicLink).mockRejectedValue(new Error('rate limited'))
   render(<Welcome onKid={vi.fn()} />)
