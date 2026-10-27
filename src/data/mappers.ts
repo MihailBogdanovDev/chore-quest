@@ -42,6 +42,15 @@ export function toQuest(row: Tables<'quests'>): Quest {
   }
 }
 
+/** A quest as the parent sees it: which kid it belongs to matters. */
+export interface FamilyQuest extends Quest {
+  kidId: string
+}
+
+export function toFamilyQuest(row: Tables<'quests'>): FamilyQuest {
+  return { ...toQuest(row), kidId: row.kid_id }
+}
+
 export function toMember(row: Tables<'members'>): Member {
   return {
     id: row.id,
