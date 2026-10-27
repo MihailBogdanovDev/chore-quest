@@ -21,6 +21,8 @@ export async function signInAsKid(): Promise<void> {
 
 export async function signOut(): Promise<void> {
   await supabase.auth.signOut()
+  // The service worker keeps family data for offline use; it must not outlive the session.
+  if ('caches' in window) await caches.delete('supabase-api')
 }
 
 /** Calls back with the current session now and on every change. Returns an unsubscribe function. */

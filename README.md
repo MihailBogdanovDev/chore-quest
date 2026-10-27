@@ -28,6 +28,16 @@ Magic-link emails land in Mailpit at http://127.0.0.1:54324. To try a parent and
 at once, open the parent on `http://localhost:5173` and the kid on
 `http://127.0.0.1:5173`: separate origins keep separate sessions.
 
+## Deploy
+
+- **Database:** hosted Supabase project. Apply migrations with `npx supabase link --project-ref <ref>`
+  then `npx supabase db push`. In the dashboard: enable anonymous sign-ins, and set the site URL
+  and redirect URLs to the Vercel production URL.
+- **App:** Vercel project linked to this repo, framework Vite. Env vars `VITE_SUPABASE_URL` and
+  `VITE_SUPABASE_KEY` (publishable key) for Production and Preview. Every push to `main` deploys.
+- **Phones:** open the production URL and use "Add to Home Screen" (iOS Safari: Share menu;
+  Android Chrome: install prompt). The app works full-screen and shows the last loaded state offline.
+
 ## Scripts
 
 | Command | What |
