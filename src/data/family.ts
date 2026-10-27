@@ -40,3 +40,7 @@ export async function listQuests(kidId: string): Promise<Quest[]> {
   const rows = unwrap(await supabase.from('quests').select().eq('kid_id', kidId).order('created_at'))
   return rows.map(toQuest)
 }
+
+export async function claimQuest(questId: string): Promise<void> {
+  unwrap(await supabase.rpc('claim_quest', { quest_id: questId }))
+}
