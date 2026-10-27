@@ -39,6 +39,11 @@ test('parent button opens the login screen', async () => {
   expect(screen.getByRole('button', { name: 'Log in' })).toBeInTheDocument()
 })
 
+test('welcome screen shows the app version', () => {
+  render(<Welcome onKid={vi.fn()} />)
+  expect(screen.getByText(`version ${__APP_VERSION__}`)).toBeInTheDocument()
+})
+
 test('kid button hands off to the kid flow', async () => {
   const onKid = vi.fn()
   render(<Welcome onKid={onKid} />)

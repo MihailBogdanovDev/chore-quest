@@ -133,6 +133,7 @@ export function ParentHome() {
       <button className="link" onClick={() => signOut()}>
         Sign out
       </button>
+      <p className="version">version {__APP_VERSION__}</p>
     </main>
   )
 }
