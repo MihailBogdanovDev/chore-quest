@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { createFamily } from '../data'
+import { createFamily, signOut } from '../data'
 import './screens.css'
 import { useAction } from './useAction'
 
@@ -33,6 +33,9 @@ export function ParentSetup({ onDone }: { onDone: () => void }) {
         </button>
         {error && <p role="alert">{error}</p>}
       </form>
+      <button className="link" onClick={() => signOut()}>
+        Sign out
+      </button>
     </main>
   )
 }

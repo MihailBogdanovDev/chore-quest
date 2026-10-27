@@ -142,3 +142,23 @@
 .actions .no {
   background: #ef476f;
 }
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 3px solid #f8f4e3;
+}
+
+.tabs button {
+  padding: 10px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: bold 1rem inherit;
+  cursor: pointer;
+}
+
+.tabs button[aria-selected='true'] {
+  background: #f8f4e3;
+  color: #2b2d42;
+}

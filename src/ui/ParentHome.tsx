@@ -14,6 +14,7 @@ import {
 } from '../data'
 import { AVATARS } from './avatars'
 import { ClaimList } from './ClaimList'
+import { PasswordForm } from './PasswordForm'
 import { QuestBoard } from './QuestBoard'
 import { QuestForm } from './QuestForm'
 import './screens.css'
@@ -28,6 +29,7 @@ export function ParentHome() {
   const [now, setNow] = useState(() => Date.now())
   const [name, setName] = useState('')
   const [avatar, setAvatar] = useState('knight')
+  const [passwordSaved, setPasswordSaved] = useState(false)
   const { run, busy, error } = useAction()
 
   const load = useCallback(async () => {
@@ -119,6 +121,13 @@ export function ParentHome() {
           </button>
         </form>
         {error && <p role="alert">{error}</p>}
+      </section>
+
+      <section className="card">
+        <h2>Password</h2>
+        <p>Set or change the password you log in with.</p>
+        <PasswordForm onSaved={() => setPasswordSaved(true)} />
+        {passwordSaved && <p>Password saved.</p>}
       </section>
 
       <button className="link" onClick={() => signOut()}>
