@@ -162,3 +162,10 @@
   background: #f8f4e3;
   color: #2b2d42;
 }
+
+.version {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 0.7rem;
+  opacity: 0.5;
+}
