@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Quest } from './core'
-import { claimQuest, getMe, listQuests, onAuthChange, signInAsKid, type Member, type Session } from './data'
+import {
+  claimQuest,
+  getMe,
+  listQuests,
+  onAuthChange,
+  signInAsKid,
+  subscribeFamily,
+  type Member,
+  type Session,
+} from './data'
 import { KidHome } from './ui/KidHome'
 import { KidJoin } from './ui/KidJoin'
 import { ParentHome } from './ui/ParentHome'
@@ -35,20 +44,30 @@ export default function App() {
   return me.role === 'parent' ? <ParentHome /> : <KidRoot me={me} />
 }
 
-function KidRoot({ me }: { me: Member }) {
+function KidRoot({ me: initial }: { me: Member }) {
+  const [me, setMe] = useState(initial)
   const [now, setNow] = useState(() => Date.now())
   const [quests, setQuests] = useState<Quest[]>([])
+  const { id, familyId } = initial
 
+  // Points live on the member row, so reload both after any family change.
   const load = useCallback(() => {
-    listQuests(me.id).then(setQuests, console.error)
-    setNow(Date.now())
-  }, [me.id])
+    Promise.all([getMe(), listQuests(id)]).then(([m, q]) => {
+      if (m) setMe(m)
+      setQuests(q)
+      setNow(Date.now())
+    }, console.error)
+  }, [id])
 
   useEffect(() => {
     load()
-    const id = setInterval(() => setNow(Date.now()), TICK_MS)
-    return () => clearInterval(id)
-  }, [load])
+    const tick = setInterval(() => setNow(Date.now()), TICK_MS)
+    const unsubscribe = subscribeFamily(familyId, load)
+    return () => {
+      clearInterval(tick)
+      unsubscribe()
+    }
+  }, [familyId, load])
 
   const claim = (questId: string) => {
     claimQuest(questId).then(load, console.error)

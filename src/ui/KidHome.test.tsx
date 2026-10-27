@@ -40,6 +40,18 @@ test('tapping a monster shows the quest and its decaying worth', async () => {
   expect(onClaim).toHaveBeenCalledWith('dishes')
 })
 
+test('quest approved while its sheet is open shows it slain', () => {
+  const props = { lifetimePoints: 0, walletPoints: 0, now, onClaim: vi.fn() }
+  const { rerender } = render(<KidHome quests={quests} {...props} />)
+  act(() => tap('trash'))
+  const slain = quests.map((q) =>
+    q.id === 'trash' ? { ...q, status: 'done' as const, approvedAt: now } : q,
+  )
+  rerender(<KidHome quests={slain} {...props} />)
+  expect(screen.getByText('Slain! +25P')).toBeInTheDocument()
+  expect(screen.queryByText('Waiting for a parent to check')).not.toBeInTheDocument()
+})
+
 test('quest list opens the same detail', async () => {
   render(<KidHome quests={quests} lifetimePoints={0} walletPoints={0} now={now} onClaim={vi.fn()} />)
   await userEvent.click(screen.getByRole('button', { name: 'Quests (2)' }))

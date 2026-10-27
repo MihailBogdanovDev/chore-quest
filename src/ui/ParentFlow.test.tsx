@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, expect, test, vi } from 'vitest'
 import * as data from '../data'
@@ -13,6 +13,10 @@ vi.mock('../data', () => ({
   listKids: vi.fn(),
   addKid: vi.fn(),
   signOut: vi.fn(),
+  listFamilyQuests: vi.fn().mockResolvedValue([]),
+  postQuest: vi.fn(),
+  reviewClaim: vi.fn(),
+  subscribeFamily: vi.fn(() => () => {}),
 }))
 
 const kid = (name: string, joined: boolean): data.Member => ({
@@ -22,6 +26,8 @@ const kid = (name: string, joined: boolean): data.Member => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.mocked(data.listFamilyQuests).mockResolvedValue([])
+  vi.mocked(data.subscribeFamily).mockReturnValue(() => {})
 })
 
 test('parent asks for a magic link', async () => {
@@ -69,11 +75,13 @@ test('parent home shows invite code and kids, and adds a kid', async () => {
 
   expect(await screen.findByRole('heading', { name: 'The Bogdanovs' })).toBeInTheDocument()
   expect(screen.getByText('ABC234')).toBeInTheDocument()
-  expect(screen.getByText(/Ben/).closest('li')).toHaveTextContent('joined')
+  const kidList = () => within(screen.getByRole('list', { name: 'Kids' }))
+  expect(kidList().getByText(/Ben/)).toHaveTextContent('joined')
+  expect(data.subscribeFamily).toHaveBeenCalledWith('f1', expect.any(Function))
 
   await userEvent.type(screen.getByLabelText('Kid name'), 'Ana')
   await userEvent.selectOptions(screen.getByLabelText('Avatar'), 'wizard')
   await userEvent.click(screen.getByRole('button', { name: 'Add kid' }))
   expect(data.addKid).toHaveBeenCalledWith('Ana', 'wizard')
-  expect((await screen.findByText(/Ana/)).closest('li')).toHaveTextContent('waiting')
+  expect(await kidList().findByText(/Ana/)).toHaveTextContent('waiting')
 })

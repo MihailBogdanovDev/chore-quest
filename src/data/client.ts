@@ -13,10 +13,10 @@ export const supabase = createClient<Database>(url, key)
 type Result<T> = { data: T | null; error: { message: string } | null }
 
 /** Unwraps a Supabase result, turning its error into a thrown Error. */
-export function unwrap<T>(res: Result<T>): T {
+export function unwrap<T>(res: Result<T>, opts: { allowEmpty?: boolean } = {}): T {
   if (res.error) throw new Error(res.error.message)
-  if (res.data === null) throw new Error('No data returned')
-  return res.data
+  if (res.data === null && !opts.allowEmpty) throw new Error('No data returned')
+  return res.data as T
 }
 
 /** Like unwrap, for queries where no row is a valid answer. */

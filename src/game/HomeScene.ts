@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser'
 import type { BaseView, MonsterView } from '../core'
+import { slainMonsters } from './diff'
 import { BAND_TINT, MONSTER_COLOR, TIER_ORDER, TIER_WIDTH } from './palette'
 
 export const WIDTH = 320
@@ -14,6 +15,8 @@ export class HomeScene extends Phaser.Scene {
   private view: BaseView
   private readonly onMonsterTap: (questId: string) => void
   private layer?: Phaser.GameObjects.Container
+  /** Where each monster was last drawn, so a slain one can burst in place. */
+  private positions = new Map<string, { x: number; y: number }>()
 
   constructor(view: BaseView, onMonsterTap: (questId: string) => void) {
     super('home')
@@ -27,14 +30,20 @@ export class HomeScene extends Phaser.Scene {
   }
 
   setView(view: BaseView) {
+    const slain = slainMonsters(this.view.monsters, view.monsters)
+    const lastSeen = new Map(this.positions)
     this.view = view
-    if (this.sys.isActive()) this.redraw()
+    if (!this.sys.isActive()) return
+    this.redraw()
+    for (const m of slain) this.burst(m, lastSeen.get(m.questId))
   }
 
   private redraw() {
-    this.tweens.killAll()
+    // Only stop the idle bobbing of monsters being replaced; a running burst keeps going.
+    this.layer?.list.forEach((o) => this.tweens.killTweensOf(o))
     this.layer?.destroy()
     this.layer = this.add.container(0, 0)
+    this.positions.clear()
     this.layer.add(this.drawBase())
     this.view.monsters.forEach((m, i) => this.layer!.add(this.drawMonster(m, i)))
   }
@@ -99,6 +108,25 @@ export class HomeScene extends Phaser.Scene {
     }
   }
 
+  /** Death animation: the monster pops into pixels that fly out and fade. */
+  private burst(m: MonsterView, at = { x: 220, y: GROUND_Y - 14 }) {
+    const pixels = 10
+    for (let i = 0; i < pixels; i++) {
+      const angle = (i / pixels) * Math.PI * 2
+      const dist = 24 + MONSTER_RADIUS * m.scale
+      const px = this.add.rectangle(at.x, at.y, 4, 4, MONSTER_COLOR[m.kind])
+      this.tweens.add({
+        targets: px,
+        x: at.x + Math.cos(angle) * dist,
+        y: at.y + Math.sin(angle) * dist,
+        alpha: 0,
+        duration: 600,
+        ease: 'Quad.easeOut',
+        onComplete: () => px.destroy(),
+      })
+    }
+  }
+
   private drawMonster(m: MonsterView, index: number): Phaser.GameObjects.Container {
     const r = MONSTER_RADIUS * m.scale
     const col = index % 3
@@ -106,6 +134,7 @@ export class HomeScene extends Phaser.Scene {
     const x = 190 + col * 44 + row * 18
     const y = GROUND_Y - r + row * 14
     const c = this.add.container(x, y)
+    this.positions.set(m.questId, { x, y })
 
     const body = this.add.graphics()
     body.fillStyle(MONSTER_COLOR[m.kind]).fillEllipse(0, 0, r * 2, r * 1.8)

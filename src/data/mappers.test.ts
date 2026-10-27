@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { toMember, toQuest } from './mappers'
+import { toFamilyQuest, toMember, toQuest } from './mappers'
 
 test('quest row → core Quest with epoch ms timestamps', () => {
   const quest = toQuest({
@@ -53,4 +53,14 @@ test('member row → Member, unbound kid is not joined', () => {
     walletPoints: 20,
     joined: false,
   })
+})
+
+test('family quest row keeps the kid id', () => {
+  const quest = toFamilyQuest({
+    id: 'q1', family_id: 'f1', kid_id: 'k1', title: 'Trash', category: 'trash', size: 'S',
+    created_at: '2026-10-27T10:00:00+00:00', due_at: '2026-10-28T10:00:00+00:00',
+    status: 'open', claimed_at: null, approved_at: null, proof_path: null, points_awarded: null,
+  })
+  expect(quest.kidId).toBe('k1')
+  expect(quest.title).toBe('Trash')
 })

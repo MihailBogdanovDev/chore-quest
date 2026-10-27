@@ -1,6 +1,15 @@
-import type { Quest } from '../core'
+import type { Category, Quest, Size } from '../core'
 import { supabase, unwrap, unwrapMaybe } from './client'
-import { toFamily, toMember, toQuest, type Family, type KidOption, type Member } from './mappers'
+import {
+  toFamily,
+  toFamilyQuest,
+  toMember,
+  toQuest,
+  type Family,
+  type FamilyQuest,
+  type KidOption,
+  type Member,
+} from './mappers'
 
 /** The signed-in user's member row, or null before they create or join a family. */
 export async function getMe(): Promise<Member | null> {
@@ -43,4 +52,38 @@ export async function listQuests(kidId: string): Promise<Quest[]> {
 
 export async function claimQuest(questId: string): Promise<void> {
   unwrap(await supabase.rpc('claim_quest', { quest_id: questId }))
+}
+
+export interface NewQuest {
+  kidId: string
+  title: string
+  category: Category
+  size: Size
+  dueAt: number
+}
+
+export async function postQuest(input: NewQuest): Promise<void> {
+  const me = await getMe()
+  if (!me) throw new Error('not signed in')
+  unwrap(
+    await supabase.from('quests').insert({
+      family_id: me.familyId,
+      kid_id: input.kidId,
+      title: input.title,
+      category: input.category,
+      size: input.size,
+      due_at: new Date(input.dueAt).toISOString(),
+    }),
+    { allowEmpty: true },
+  )
+}
+
+/** Every quest in the family that is still alive (open or claimed). */
+export async function listFamilyQuests(): Promise<FamilyQuest[]> {
+  const rows = unwrap(await supabase.from('quests').select().neq('status', 'done').order('created_at'))
+  return rows.map(toFamilyQuest)
+}
+
+export async function reviewClaim(questId: string, approve: boolean): Promise<void> {
+  unwrap(await supabase.rpc('review_claim', { quest_id: questId, approve }))
 }
