@@ -7,9 +7,13 @@ const kinds: MonsterKind[] = [
 ]
 const bands: HpBand[] = ['clean', 'dirty', 'cracked', 'wrecked', 'ruined']
 
-test('every monster and band has a color', () => {
+test('every monster has a burst color and every band a tint', () => {
   for (const k of kinds) expect(MONSTER_COLOR[k]).toBeTypeOf('number')
   for (const b of bands) expect(BAND_TINT[b]).toBeTypeOf('number')
+})
+
+test('a clean base is drawn untinted', () => {
+  expect(BAND_TINT.clean).toBe(0xffffff)
 })
 
 test('base grows with every tier', () => {
