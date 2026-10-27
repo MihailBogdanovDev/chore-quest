@@ -1,0 +1,79 @@
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, expect, test, vi } from 'vitest'
+import * as data from '../data'
+import { ParentHome } from './ParentHome'
+import { ParentSetup } from './ParentSetup'
+import { Welcome } from './Welcome'
+
+vi.mock('../data', () => ({
+  sendMagicLink: vi.fn(),
+  createFamily: vi.fn(),
+  getFamily: vi.fn(),
+  listKids: vi.fn(),
+  addKid: vi.fn(),
+  signOut: vi.fn(),
+}))
+
+const kid = (name: string, joined: boolean): data.Member => ({
+  id: name, familyId: 'f1', role: 'kid', displayName: name, avatar: 'knight',
+  lifetimePoints: 0, walletPoints: 0, joined,
+})
+
+beforeEach(() => {
+  vi.clearAllMocks()
+})
+
+test('parent asks for a magic link', async () => {
+  vi.mocked(data.sendMagicLink).mockResolvedValue()
+  render(<Welcome onKid={vi.fn()} />)
+  await userEvent.click(screen.getByRole('button', { name: "I'm a parent" }))
+  await userEvent.type(screen.getByLabelText('Email'), 'mum@example.com')
+  await userEvent.click(screen.getByRole('button', { name: 'Send magic link' }))
+  expect(data.sendMagicLink).toHaveBeenCalledWith('mum@example.com')
+  expect(await screen.findByText(/Check your email/)).toBeInTheDocument()
+})
+
+test('kid button hands off to the kid flow', async () => {
+  const onKid = vi.fn()
+  render(<Welcome onKid={onKid} />)
+  await userEvent.click(screen.getByRole('button', { name: "I'm a kid" }))
+  expect(onKid).toHaveBeenCalled()
+})
+
+test('magic link errors are shown', async () => {
+  vi.mocked(data.sendMagicLink).mockRejectedValue(new Error('rate limited'))
+  render(<Welcome onKid={vi.fn()} />)
+  await userEvent.click(screen.getByRole('button', { name: "I'm a parent" }))
+  await userEvent.type(screen.getByLabelText('Email'), 'mum@example.com')
+  await userEvent.click(screen.getByRole('button', { name: 'Send magic link' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('rate limited')
+})
+
+test('parent creates a family', async () => {
+  vi.mocked(data.createFamily).mockResolvedValue()
+  const onDone = vi.fn()
+  render(<ParentSetup onDone={onDone} />)
+  await userEvent.type(screen.getByLabelText('Family name'), 'The Bogdanovs')
+  await userEvent.type(screen.getByLabelText('Your name'), 'Mihail')
+  await userEvent.click(screen.getByRole('button', { name: 'Create family' }))
+  expect(data.createFamily).toHaveBeenCalledWith('The Bogdanovs', 'Mihail')
+  expect(onDone).toHaveBeenCalled()
+})
+
+test('parent home shows invite code and kids, and adds a kid', async () => {
+  vi.mocked(data.getFamily).mockResolvedValue({ id: 'f1', name: 'The Bogdanovs', inviteCode: 'ABC234' })
+  vi.mocked(data.listKids).mockResolvedValueOnce([kid('Ben', true)]).mockResolvedValueOnce([kid('Ben', true), kid('Ana', false)])
+  vi.mocked(data.addKid).mockResolvedValue()
+  render(<ParentHome />)
+
+  expect(await screen.findByRole('heading', { name: 'The Bogdanovs' })).toBeInTheDocument()
+  expect(screen.getByText('ABC234')).toBeInTheDocument()
+  expect(screen.getByText(/Ben/).closest('li')).toHaveTextContent('joined')
+
+  await userEvent.type(screen.getByLabelText('Kid name'), 'Ana')
+  await userEvent.selectOptions(screen.getByLabelText('Avatar'), 'wizard')
+  await userEvent.click(screen.getByRole('button', { name: 'Add kid' }))
+  expect(data.addKid).toHaveBeenCalledWith('Ana', 'wizard')
+  expect((await screen.findByText(/Ana/)).closest('li')).toHaveTextContent('waiting')
+})

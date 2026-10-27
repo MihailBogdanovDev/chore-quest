@@ -1,6 +1,6 @@
 import { HOUR, type Quest } from '../core'
 
-/** Demo family state until Supabase is wired up (issue #6). */
+/** Sample family state for tests. */
 export function mockQuests(now: number): Quest[] {
   return [
     {
