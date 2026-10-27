@@ -1,6 +1,7 @@
-// Placeholder art colors until real pixel sprites land (issue #7).
+// Colors and sizes the scene still draws in code around the sprites.
 import type { HpBand, MonsterKind, Tier } from '../core'
 
+/** Pixel color a slain monster bursts into, picked from its sprite. */
 export const MONSTER_COLOR: Record<MonsterKind, number> = {
   'water-slime': 0x3fa9f5,
   'garbage-golem': 0x6b8e23,
@@ -11,17 +12,18 @@ export const MONSTER_COLOR: Record<MonsterKind, number> = {
   goblin: 0x4caf50,
 }
 
-/** Wall color as the base takes damage: clean → grimy → scorched. */
+/** Tint multiplied over the base sprite as it takes damage: clean → grimy → scorched. */
 export const BAND_TINT: Record<HpBand, number> = {
-  clean: 0xe8d5b0,
-  dirty: 0xc2a878,
-  cracked: 0x9c8460,
-  wrecked: 0x6e5c45,
-  ruined: 0x4a3f33,
+  clean: 0xffffff,
+  dirty: 0xd9cbb4,
+  cracked: 0xb8a68a,
+  wrecked: 0x8f7e67,
+  ruined: 0x6b5f52,
 }
 
 export const TIER_ORDER: Tier[] = ['tent', 'hut', 'cottage', 'house', 'fort', 'castle']
 
+/** Width the base sprite is drawn at, in logical pixels. */
 export const TIER_WIDTH: Record<Tier, number> = {
   tent: 40,
   hut: 56,

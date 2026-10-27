@@ -2,12 +2,16 @@ import * as Phaser from 'phaser'
 import type { BaseView, MonsterView } from '../core'
 import { slainMonsters } from './diff'
 import { BAND_TINT, MONSTER_COLOR, TIER_ORDER, TIER_WIDTH } from './palette'
+import { BASE_SPRITE, baseKey, MONSTER_SPRITE, monsterKey } from './sprites'
 
 export const WIDTH = 320
 export const HEIGHT = 240
 const GROUND_Y = 190
 const BASE_X = 100
-const MONSTER_RADIUS = 14
+/** Drawn height of a medium monster; S and L scale from it. */
+const MONSTER_PX = 34
+/** Tallest a base may be drawn, so a castle stays under the sky. */
+const MAX_BASE_H = 150
 const MIN_TAP = 36
 
 /** Draws one kid's base with the monsters attacking it. Knows nothing about data loading. */
@@ -22,6 +26,11 @@ export class HomeScene extends Phaser.Scene {
     super('home')
     this.view = view
     this.onMonsterTap = onMonsterTap
+  }
+
+  preload() {
+    for (const tier of TIER_ORDER) this.load.image(baseKey(tier), BASE_SPRITE[tier])
+    for (const [kind, path] of Object.entries(MONSTER_SPRITE)) this.load.image(monsterKey(kind as MonsterView['kind']), path)
   }
 
   create() {
@@ -57,35 +66,22 @@ export class HomeScene extends Phaser.Scene {
     g.fillStyle(0x7cb342).fillRect(0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y)
   }
 
-  private drawBase(): Phaser.GameObjects.Graphics {
+  private drawBase(): Phaser.GameObjects.Container {
     const { tier, band } = this.view
-    const level = TIER_ORDER.indexOf(tier)
-    const w = TIER_WIDTH[tier]
-    const ruined = band === 'ruined'
-    const h = (ruined ? 0.4 : 1) * (24 + level * 8)
-    const left = BASE_X - w / 2
-    const top = GROUND_Y - h
-    const g = this.add.graphics()
-
-    if (tier === 'tent') {
-      g.fillStyle(BAND_TINT[band]).fillTriangle(left, GROUND_Y, BASE_X, GROUND_Y - (ruined ? 12 : 34), left + w, GROUND_Y)
-      g.fillStyle(0x3e2f22).fillTriangle(BASE_X - 6, GROUND_Y, BASE_X, GROUND_Y - 14, BASE_X + 6, GROUND_Y)
-    } else {
-      g.fillStyle(BAND_TINT[band]).fillRect(left, top, w, h)
-      if (!ruined) g.fillStyle(0xa23b2a).fillTriangle(left - 6, top, BASE_X, top - 18 - level * 3, left + w + 6, top)
-      if (level >= 4) {
-        // Fort and castle get towers with battlements.
-        for (const tx of [left - 6, left + w - 10]) {
-          g.fillStyle(BAND_TINT[band]).fillRect(tx, top - 16, 16, h + 16)
-          for (let i = 0; i < 3; i++) g.fillRect(tx + i * 6, top - 22, 4, 6)
-        }
-      }
-      g.fillStyle(0x3e2f22).fillRect(BASE_X - 6, GROUND_Y - 16, 12, 16)
-      if (level >= 2 && !ruined) g.fillStyle(0xfff3b0).fillRect(left + 8, top + 8, 8, 8).fillRect(left + w - 16, top + 8, 8, 8)
+    const img = this.add.image(BASE_X, GROUND_Y, baseKey(tier)).setOrigin(0.5, 1).setTint(BAND_TINT[band])
+    let w = TIER_WIDTH[tier]
+    let h = (w * img.height) / img.width
+    if (h > MAX_BASE_H) [w, h] = [(w * MAX_BASE_H) / h, MAX_BASE_H]
+    img.setDisplaySize(w, h)
+    if (band === 'ruined') {
+      // Only the bottom of the walls is left standing.
+      img.setCrop(0, img.height * 0.6, img.width, img.height * 0.4)
+      h *= 0.4
     }
-
-    this.drawDamage(g, left, top, w, h)
-    return g
+    const g = this.add.graphics()
+    // Keep the grime on the walls, not the transparent margin around the sprite.
+    this.drawDamage(g, BASE_X - w * 0.35, GROUND_Y - h * 0.75, w * 0.7, h * 0.75)
+    return this.add.container(0, 0, [img, g])
   }
 
   private drawDamage(g: Phaser.GameObjects.Graphics, left: number, top: number, w: number, h: number) {
@@ -113,7 +109,7 @@ export class HomeScene extends Phaser.Scene {
     const pixels = 10
     for (let i = 0; i < pixels; i++) {
       const angle = (i / pixels) * Math.PI * 2
-      const dist = 24 + MONSTER_RADIUS * m.scale
+      const dist = 24 + (MONSTER_PX / 2) * m.scale
       const px = this.add.rectangle(at.x, at.y, 4, 4, MONSTER_COLOR[m.kind])
       this.tweens.add({
         targets: px,
@@ -128,24 +124,20 @@ export class HomeScene extends Phaser.Scene {
   }
 
   private drawMonster(m: MonsterView, index: number): Phaser.GameObjects.Container {
-    const r = MONSTER_RADIUS * m.scale
+    const h = MONSTER_PX * m.scale
     const col = index % 3
     const row = Math.floor(index / 3)
     const x = 190 + col * 44 + row * 18
-    const y = GROUND_Y - r + row * 14
+    const y = GROUND_Y - h / 2 + row * 14
     const c = this.add.container(x, y)
     this.positions.set(m.questId, { x, y })
 
-    const body = this.add.graphics()
-    body.fillStyle(MONSTER_COLOR[m.kind]).fillEllipse(0, 0, r * 2, r * 1.8)
-    body.fillStyle(0xffffff).fillCircle(-r * 0.35, -r * 0.2, r * 0.25).fillCircle(r * 0.35, -r * 0.2, r * 0.25)
-    body.fillStyle(0x000000).fillCircle(-r * 0.4, -r * 0.2, r * 0.12).fillCircle(r * 0.3, -r * 0.2, r * 0.12)
-    body.fillStyle(0x7a1f1f).fillRect(-r * 0.3, r * 0.3, r * 0.6, r * 0.15)
-    if (m.size === 'L') body.fillStyle(0xffffff).fillTriangle(-r * 0.7, -r * 0.7, -r * 0.5, -r * 1.2, -r * 0.3, -r * 0.8)
+    const body = this.add.image(0, 0, monsterKey(m.kind))
+    body.setScale(h / body.height)
     c.add(body)
 
     // Small monsters still get a finger-sized tap target.
-    const hit = Math.max(r * 2, MIN_TAP)
+    const hit = Math.max(body.displayWidth, h, MIN_TAP)
     c.setSize(hit, hit).setInteractive({ useHandCursor: true })
     c.on('pointerdown', () => this.onMonsterTap(m.questId))
     if (m.claimed) c.setAlpha(0.5)

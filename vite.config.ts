@@ -40,6 +40,8 @@ export default defineConfig({
         clientsClaim: true,
         // Phaser makes the main chunk bigger than Workbox's 2 MB default.
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        // Sprites are precached too, so the base still draws offline.
+        globPatterns: ['**/*.{js,css,html,png}'],
         navigateFallback: '/index.html',
         runtimeCaching: [
           {
