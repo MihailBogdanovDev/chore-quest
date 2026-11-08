@@ -28,3 +28,5 @@ The terms have no separate section on game assets and no separate terms for tria
 | `public/sprites/bases/castle.png` | PixelLab (generated) | 2026-10-27 | Owned by the project; commercial and non-commercial use allowed (PixelLab ToS §1.3, §3.3) |
 
 The Water Slime was generated first with PixelLab's Create Image (Pro) model, using the project's own monster inspiration sheet as a reference; the rest were generated with PixelLab's map-object tool using the same outline, shading and detail settings. Sprites were trimmed to their visible pixels and are otherwise unedited. The inspiration sheet is not part of this repository.
+
+| `public/art/**` (heroes, icons coin/chest-closed/torch/keep/scroll/shop/bag, logo.png, bg-village.png) | PixelLab (generated) | 2026-11-08 | Owned by the project; commercial and non-commercial use allowed (PixelLab ToS §1.3, §3.3). Other icons in public/art/icons are downscaled system emoji renders (placeholders). |
