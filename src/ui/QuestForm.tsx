@@ -1,14 +1,9 @@
 import { useState, type FormEvent } from 'react'
-import { HOUR, monsterFor, type Category, type Size } from '../core'
+import { HOUR, monsterFor, type Category } from '../core'
 import type { Member, NewQuest } from '../data'
 import { useAction } from './useAction'
 
 const CATEGORIES: Category[] = ['dishes', 'trash', 'room', 'laundry', 'pets', 'homework', 'other']
-const SIZES: [Size, string][] = [
-  ['S', 'Small'],
-  ['M', 'Medium'],
-  ['L', 'Boss'],
-]
 const DUE_HOURS = [2, 6, 12, 24, 48]
 
 interface Props {
@@ -20,7 +15,7 @@ interface Props {
 export function QuestForm({ kids, now, onPost }: Props) {
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState<Category>('dishes')
-  const [size, setSize] = useState<Size>('M')
+  const [gold, setGold] = useState(10)
   const [kidId, setKidId] = useState(kids[0]?.id ?? '')
   const [dueHours, setDueHours] = useState(24)
   const { run, busy, error } = useAction()
@@ -30,7 +25,7 @@ export function QuestForm({ kids, now, onPost }: Props) {
   const submit = (e: FormEvent) => {
     e.preventDefault()
     run(async () => {
-      await onPost({ kidId: kidId || kids[0].id, title, category, size, dueAt: now + dueHours * HOUR })
+      await onPost({ kidId: kidId || kids[0].id, title, category, gold, repeat: 'none', dueAt: now + dueHours * HOUR })
       setTitle('')
     })
   }
@@ -46,20 +41,14 @@ export function QuestForm({ kids, now, onPost }: Props) {
         <select value={category} onChange={(e) => setCategory(e.target.value as Category)}>
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>
-              {c} · {monsterFor(c, 'M').name}
+              {c} · {monsterFor(c, 10).name}
             </option>
           ))}
         </select>
       </label>
       <label>
-        Size
-        <select value={size} onChange={(e) => setSize(e.target.value as Size)}>
-          {SIZES.map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
+        Gold
+        <input type="number" min={1} max={1000} value={gold} onChange={(e) => setGold(Number(e.target.value))} />
       </label>
       <label>
         For

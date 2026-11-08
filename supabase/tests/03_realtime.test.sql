@@ -5,8 +5,8 @@ select plan(1);
 
 select set_eq(
   $$select tablename::text from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public'$$,
-  array['quests', 'members'],
-  'quests and members are published to realtime'
+  array['quests', 'members', 'rewards', 'purchases'],
+  'quests, members, rewards and purchases are published to realtime'
 );
 
 select * from finish();

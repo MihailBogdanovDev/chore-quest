@@ -1,9 +1,9 @@
-import { pointsAt } from '../core'
-import type { FamilyQuest, Member } from '../data'
+import type { Quest } from '../core'
+import type { Member } from '../data'
 import { useAction } from './useAction'
 
 interface Props {
-  quests: FamilyQuest[]
+  quests: Quest[]
   kids: Member[]
   onReview: (questId: string, approve: boolean) => Promise<void>
 }
@@ -22,7 +22,7 @@ export function ClaimList({ quests, kids, onReview }: Props) {
         {claimed.map((q) => (
           <li key={q.id}>
             <span>
-              <strong>{name(q.kidId)}</strong> · {q.title} · {pointsAt(q, q.claimedAt!)}P
+              <strong>{name(q.kidId)}</strong> · {q.title} · {q.gold}G
             </span>
             <span className="actions">
               <button className="ok" disabled={busy} onClick={() => run(() => onReview(q.id, true))}>

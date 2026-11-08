@@ -17,14 +17,14 @@ vi.mock('../data', () => ({
   addKid: vi.fn(),
   signOut: vi.fn(),
   listFamilyQuests: vi.fn().mockResolvedValue([]),
-  postQuest: vi.fn(),
+  createQuest: vi.fn(),
   reviewClaim: vi.fn(),
   subscribeFamily: vi.fn(() => () => {}),
 }))
 
 const kid = (name: string, joined: boolean): data.Member => ({
   id: name, familyId: 'f1', role: 'kid', displayName: name, avatar: 'knight',
-  lifetimePoints: 0, walletPoints: 0, joined,
+  xp: 0, gold: 0, streak: 0, bestStreak: 0, approvalsCount: 0, joined,
 })
 
 beforeEach(() => {

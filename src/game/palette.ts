@@ -1,5 +1,5 @@
 // Colors and sizes the scene still draws in code around the sprites.
-import type { HpBand, MonsterKind, Tier } from '../core'
+import type { MonsterKind, Tier } from '../core'
 
 /** Pixel color a slain monster bursts into, picked from its sprite. */
 export const MONSTER_COLOR: Record<MonsterKind, number> = {
@@ -10,15 +10,6 @@ export const MONSTER_COLOR: Record<MonsterKind, number> = {
   'mud-critter': 0x7b4a2a,
   'paper-imp': 0xf4e3b1,
   goblin: 0x4caf50,
-}
-
-/** Tint multiplied over the base sprite as it takes damage: clean → grimy → scorched. */
-export const BAND_TINT: Record<HpBand, number> = {
-  clean: 0xffffff,
-  dirty: 0xd9cbb4,
-  cracked: 0xb8a68a,
-  wrecked: 0x8f7e67,
-  ruined: 0x6b5f52,
 }
 
 export const TIER_ORDER: Tier[] = ['tent', 'hut', 'cottage', 'house', 'fort', 'castle']

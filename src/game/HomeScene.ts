@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser'
 import type { BaseView, MonsterView } from '../core'
 import { slainMonsters } from './diff'
-import { BAND_TINT, MONSTER_COLOR, TIER_ORDER, TIER_WIDTH } from './palette'
+import { MONSTER_COLOR, TIER_ORDER, TIER_WIDTH } from './palette'
 import { BASE_SPRITE, baseKey, MONSTER_SPRITE, monsterKey } from './sprites'
 
 export const WIDTH = 320
@@ -67,41 +67,13 @@ export class HomeScene extends Phaser.Scene {
   }
 
   private drawBase(): Phaser.GameObjects.Container {
-    const { tier, band } = this.view
-    const img = this.add.image(BASE_X, GROUND_Y, baseKey(tier)).setOrigin(0.5, 1).setTint(BAND_TINT[band])
+    const { tier } = this.view
+    const img = this.add.image(BASE_X, GROUND_Y, baseKey(tier)).setOrigin(0.5, 1)
     let w = TIER_WIDTH[tier]
     let h = (w * img.height) / img.width
     if (h > MAX_BASE_H) [w, h] = [(w * MAX_BASE_H) / h, MAX_BASE_H]
     img.setDisplaySize(w, h)
-    if (band === 'ruined') {
-      // Only the bottom of the walls is left standing.
-      img.setCrop(0, img.height * 0.6, img.width, img.height * 0.4)
-      h *= 0.4
-    }
-    const g = this.add.graphics()
-    // Keep the grime on the walls, not the transparent margin around the sprite.
-    this.drawDamage(g, BASE_X - w * 0.35, GROUND_Y - h * 0.75, w * 0.7, h * 0.75)
-    return this.add.container(0, 0, [img, g])
-  }
-
-  private drawDamage(g: Phaser.GameObjects.Graphics, left: number, top: number, w: number, h: number) {
-    const { band } = this.view
-    if (band === 'clean') return
-    // Grime spots for every damaged band.
-    g.fillStyle(0x4e3b2a, 0.5)
-    for (let i = 0; i < 4; i++) g.fillCircle(left + ((i * 37) % w), top + h * 0.3 + ((i * 13) % (h * 0.6)), 3)
-    if (band === 'cracked' || band === 'wrecked') {
-      g.lineStyle(1, 0x2b2118)
-      g.lineBetween(left + w * 0.2, top + 4, left + w * 0.3, top + h * 0.6)
-      g.lineBetween(left + w * 0.7, top + h * 0.2, left + w * 0.62, top + h * 0.8)
-    }
-    if (band === 'wrecked') {
-      g.fillStyle(0x1f1a14).fillRect(left + w * 0.6, top + 2, 10, 8)
-    }
-    if (band === 'ruined') {
-      g.fillStyle(0x6e6259)
-      for (let i = 0; i < 6; i++) g.fillRect(left - 8 + i * (w / 5), GROUND_Y - 5, 8, 5)
-    }
+    return this.add.container(0, 0, [img])
   }
 
   /** Death animation: the monster pops into pixels that fly out and fade. */

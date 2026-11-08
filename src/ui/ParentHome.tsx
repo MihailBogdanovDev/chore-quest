@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import type { Quest } from '../core'
 import {
   addKid,
   getFamily,
   listFamilyQuests,
   listKids,
-  postQuest,
+  createQuest,
   reviewClaim,
   signOut,
   subscribeFamily,
   type Family,
-  type FamilyQuest,
   type Member,
 } from '../data'
 import { AVATARS } from './avatars'
@@ -25,7 +25,7 @@ const TICK_MS = 30_000
 export function ParentHome() {
   const [family, setFamily] = useState<Family | null>(null)
   const [kids, setKids] = useState<Member[]>([])
-  const [quests, setQuests] = useState<FamilyQuest[]>([])
+  const [quests, setQuests] = useState<Quest[]>([])
   const [now, setNow] = useState(() => Date.now())
   const [name, setName] = useState('')
   const [avatar, setAvatar] = useState('knight')
@@ -78,7 +78,7 @@ export function ParentHome() {
       <section className="card">
         <h2>Post a quest</h2>
         <QuestForm kids={kids} now={now} onPost={async (quest) => {
-          await postQuest(quest)
+          await createQuest(quest)
           await load()
         }} />
       </section>
@@ -96,7 +96,7 @@ export function ParentHome() {
         <ul className="kid-list" aria-label="Kids">
           {kids.map((k) => (
             <li key={k.id}>
-              {AVATARS[k.avatar] ?? '🙂'} {k.displayName} · {k.walletPoints}P{' '}
+              {AVATARS[k.avatar] ?? '🙂'} {k.displayName} · {k.gold}G{' '}
               <span className="tag">{k.joined ? 'joined' : 'waiting'}</span>
             </li>
           ))}

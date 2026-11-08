@@ -23,176 +23,27 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "families": {
-                  Row: {
-                    "created_at": string,"id": string,"invite_code": string,"name": string
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "created_at"?: string,"id"?: string,"invite_code": string,"name": string
-                  }
-                  Update: {
-                    "created_at"?: string,"id"?: string,"invite_code"?: string,"name"?: string
-                  }
-                  Relationships: [
-                    
-                  ]
-                },"members": {
-                  Row: {
-                    "avatar": string,"created_at": string,"display_name": string,"family_id": string,"id": string,"lifetime_points": number,"role": Database["public"]['Enums']["member_role"],"user_id": string | null,"wallet_points": number
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "avatar"?: string,"created_at"?: string,"display_name": string,"family_id": string,"id"?: string,"lifetime_points"?: number,"role": Database["public"]['Enums']["member_role"],"user_id"?: string | null,"wallet_points"?: number
-                  }
-                  Update: {
-                    "avatar"?: string,"created_at"?: string,"display_name"?: string,"family_id"?: string,"id"?: string,"lifetime_points"?: number,"role"?: Database["public"]['Enums']["member_role"],"user_id"?: string | null,"wallet_points"?: number
-                  }
-                  Relationships: [
-                    {
-      foreignKeyName: "members_family_id_fkey"
-      columns: ["family_id"]
-isOneToOne: false
-      referencedRelation: "families"
-      referencedColumns: ["id"]
-    }
-                  ]
-                },"quests": {
-                  Row: {
-                    "approved_at": string | null,"category": Database["public"]['Enums']["quest_category"],"claimed_at": string | null,"created_at": string,"due_at": string,"family_id": string,"id": string,"kid_id": string,"points_awarded": number | null,"proof_path": string | null,"size": Database["public"]['Enums']["quest_size"],"status": Database["public"]['Enums']["quest_status"],"title": string
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "approved_at"?: string | null,"category": Database["public"]['Enums']["quest_category"],"claimed_at"?: string | null,"created_at"?: string,"due_at"?: string,"family_id": string,"id"?: string,"kid_id": string,"points_awarded"?: number | null,"proof_path"?: string | null,"size": Database["public"]['Enums']["quest_size"],"status"?: Database["public"]['Enums']["quest_status"],"title": string
-                  }
-                  Update: {
-                    "approved_at"?: string | null,"category"?: Database["public"]['Enums']["quest_category"],"claimed_at"?: string | null,"created_at"?: string,"due_at"?: string,"family_id"?: string,"id"?: string,"kid_id"?: string,"points_awarded"?: number | null,"proof_path"?: string | null,"size"?: Database["public"]['Enums']["quest_size"],"status"?: Database["public"]['Enums']["quest_status"],"title"?: string
-                  }
-                  Relationships: [
-                    {
-      foreignKeyName: "quests_family_id_fkey"
-      columns: ["family_id"]
-isOneToOne: false
-      referencedRelation: "families"
-      referencedColumns: ["id"]
-    },{
-      foreignKeyName: "quests_kid_id_family_id_fkey"
-      columns: ["kid_id","family_id"]
-isOneToOne: false
-      referencedRelation: "members"
-      referencedColumns: ["id","family_id"]
-    }
-                  ]
-                }
+            "families": { Row: { "created_at": string;"id": string;"invite_code": string;"name": string }; ComputedFields: never; Insert: { "created_at"?: string;"id"?: string;"invite_code": string;"name": string }; Update: { "created_at"?: string;"id"?: string;"invite_code"?: string;"name"?: string }; Relationships: [] },
+            "members": { Row: { "approvals_count": number;"avatar": string;"best_streak": number;"created_at": string;"display_name": string;"family_id": string;"id": string;"last_done_on": string | null;"lifetime_points": number;"role": Database["public"]["Enums"]["member_role"];"streak": number;"user_id": string | null;"wallet_points": number }; ComputedFields: never; Insert: { "approvals_count"?: number;"avatar"?: string;"best_streak"?: number;"created_at"?: string;"display_name": string;"family_id": string;"id"?: string;"last_done_on"?: string | null;"lifetime_points"?: number;"role": Database["public"]["Enums"]["member_role"];"streak"?: number;"user_id"?: string | null;"wallet_points"?: number }; Update: { "approvals_count"?: number;"avatar"?: string;"best_streak"?: number;"created_at"?: string;"display_name"?: string;"family_id"?: string;"id"?: string;"last_done_on"?: string | null;"lifetime_points"?: number;"role"?: Database["public"]["Enums"]["member_role"];"streak"?: number;"user_id"?: string | null;"wallet_points"?: number }; Relationships: [{ foreignKeyName: "members_family_id_fkey"; columns: ["family_id"]; isOneToOne: false; referencedRelation: "families"; referencedColumns: ["id"] }] },
+            "quests": { Row: { "approved_at": string | null;"category": Database["public"]["Enums"]["quest_category"];"chest_gold": number | null;"claimed_at": string | null;"created_at": string;"due_at": string;"family_id": string;"gold": number;"id": string;"kid_id": string;"points_awarded": number | null;"proof_path": string | null;"repeat": Database["public"]["Enums"]["quest_repeat"];"size": Database["public"]["Enums"]["quest_size"];"status": Database["public"]["Enums"]["quest_status"];"title": string }; ComputedFields: never; Insert: { "approved_at"?: string | null;"category": Database["public"]["Enums"]["quest_category"];"chest_gold"?: number | null;"claimed_at"?: string | null;"created_at"?: string;"due_at"?: string;"family_id": string;"gold"?: number;"id"?: string;"kid_id": string;"points_awarded"?: number | null;"proof_path"?: string | null;"repeat"?: Database["public"]["Enums"]["quest_repeat"];"size"?: Database["public"]["Enums"]["quest_size"];"status"?: Database["public"]["Enums"]["quest_status"];"title": string }; Update: { "approved_at"?: string | null;"category"?: Database["public"]["Enums"]["quest_category"];"chest_gold"?: number | null;"claimed_at"?: string | null;"created_at"?: string;"due_at"?: string;"family_id"?: string;"gold"?: number;"id"?: string;"kid_id"?: string;"points_awarded"?: number | null;"proof_path"?: string | null;"repeat"?: Database["public"]["Enums"]["quest_repeat"];"size"?: Database["public"]["Enums"]["quest_size"];"status"?: Database["public"]["Enums"]["quest_status"];"title"?: string }; Relationships: [{ foreignKeyName: "quests_family_id_fkey"; columns: ["family_id"]; isOneToOne: false; referencedRelation: "families"; referencedColumns: ["id"] },{ foreignKeyName: "quests_kid_id_family_id_fkey"; columns: ["kid_id","family_id"]; isOneToOne: false; referencedRelation: "members"; referencedColumns: ["id","family_id"] }] },
+            "rewards": { Row: { "active": boolean;"created_at": string;"family_id": string;"icon": string;"id": string;"name": string;"price": number }; ComputedFields: never; Insert: { "active"?: boolean;"created_at"?: string;"family_id": string;"icon"?: string;"id"?: string;"name": string;"price": number }; Update: { "active"?: boolean;"created_at"?: string;"family_id"?: string;"icon"?: string;"id"?: string;"name"?: string;"price"?: number }; Relationships: [{ foreignKeyName: "rewards_family_id_fkey"; columns: ["family_id"]; isOneToOne: false; referencedRelation: "families"; referencedColumns: ["id"] }] },
+            "purchases": { Row: { "created_at": string;"delivered_at": string | null;"family_id": string;"icon": string;"id": string;"kid_id": string;"name": string;"price": number;"reward_id": string | null;"status": Database["public"]["Enums"]["purchase_status"] }; ComputedFields: never; Insert: { "created_at"?: string;"delivered_at"?: string | null;"family_id": string;"icon": string;"id"?: string;"kid_id": string;"name": string;"price": number;"reward_id"?: string | null;"status"?: Database["public"]["Enums"]["purchase_status"] }; Update: { "created_at"?: string;"delivered_at"?: string | null;"family_id"?: string;"icon"?: string;"id"?: string;"kid_id"?: string;"name"?: string;"price"?: number;"reward_id"?: string | null;"status"?: Database["public"]["Enums"]["purchase_status"] }; Relationships: [{ foreignKeyName: "purchases_family_id_fkey"; columns: ["family_id"]; isOneToOne: false; referencedRelation: "families"; referencedColumns: ["id"] },{ foreignKeyName: "purchases_kid_id_family_id_fkey"; columns: ["kid_id","family_id"]; isOneToOne: false; referencedRelation: "members"; referencedColumns: ["id","family_id"] },{ foreignKeyName: "purchases_reward_id_fkey"; columns: ["reward_id"]; isOneToOne: false; referencedRelation: "rewards"; referencedColumns: ["id"] }] }
           }
           Views: {
             [_ in never]: never
           }
           Functions: {
-            "add_kid":
-{ Args: { "kid_avatar": string,"kid_name": string }; Returns: {
-              "avatar": string,
-"created_at": string,
-"display_name": string,
-"family_id": string,
-"id": string,
-"lifetime_points": number,
-"role": Database["public"]['Enums']["member_role"],
-"user_id": string | null,
-"wallet_points": number
-            }
-                          SetofOptions: {
-        from: "*"
-        to: "members"
-        isOneToOne: true
-        isSetofReturn: false
-      } },
-"claim_quest":
-{ Args: { "quest_id": string }; Returns: {
-              "approved_at": string | null,
-"category": Database["public"]['Enums']["quest_category"],
-"claimed_at": string | null,
-"created_at": string,
-"due_at": string,
-"family_id": string,
-"id": string,
-"kid_id": string,
-"points_awarded": number | null,
-"proof_path": string | null,
-"size": Database["public"]['Enums']["quest_size"],
-"status": Database["public"]['Enums']["quest_status"],
-"title": string
-            }
-                          SetofOptions: {
-        from: "*"
-        to: "quests"
-        isOneToOne: true
-        isSetofReturn: false
-      } },
-"create_family":
-{ Args: { "family_name": string,"parent_name": string }; Returns: {
-              "created_at": string,
-"id": string,
-"invite_code": string,
-"name": string
-            }
-                          SetofOptions: {
-        from: "*"
-        to: "families"
-        isOneToOne: true
-        isSetofReturn: false
-      } },
-"family_kids":
-{ Args: { "code": string }; Returns: {
-              "avatar": string,"display_name": string,"id": string
-            }[]
-                           },
-"join_family":
-{ Args: { "code": string,"kid_id": string }; Returns: {
-              "avatar": string,
-"created_at": string,
-"display_name": string,
-"family_id": string,
-"id": string,
-"lifetime_points": number,
-"role": Database["public"]['Enums']["member_role"],
-"user_id": string | null,
-"wallet_points": number
-            }
-                          SetofOptions: {
-        from: "*"
-        to: "members"
-        isOneToOne: true
-        isSetofReturn: false
-      } },
-"quest_points":
-{ Args: { "at": string,"due_at": string,"size": Database["public"]['Enums']["quest_size"] }; Returns: number
-                           },
-"review_claim":
-{ Args: { "approve": boolean,"quest_id": string }; Returns: {
-              "approved_at": string | null,
-"category": Database["public"]['Enums']["quest_category"],
-"claimed_at": string | null,
-"created_at": string,
-"due_at": string,
-"family_id": string,
-"id": string,
-"kid_id": string,
-"points_awarded": number | null,
-"proof_path": string | null,
-"size": Database["public"]['Enums']["quest_size"],
-"status": Database["public"]['Enums']["quest_status"],
-"title": string
-            }
-                          SetofOptions: {
-        from: "*"
-        to: "quests"
-        isOneToOne: true
-        isSetofReturn: false
-      } }
+            "add_kid": { Args: { "kid_avatar": string; "kid_name": string }; Returns: { "approvals_count": number;"avatar": string;"best_streak": number;"created_at": string;"display_name": string;"family_id": string;"id": string;"last_done_on": string | null;"lifetime_points": number;"role": Database["public"]["Enums"]["member_role"];"streak": number;"user_id": string | null;"wallet_points": number }; SetofOptions: { from: "*"; to: "members"; isOneToOne: true; isSetofReturn: false } },
+            "buy_reward": { Args: { "reward_id": string }; Returns: string },
+            "claim_quest": { Args: { "quest_id": string }; Returns: { "approved_at": string | null;"category": Database["public"]["Enums"]["quest_category"];"chest_gold": number | null;"claimed_at": string | null;"created_at": string;"due_at": string;"family_id": string;"gold": number;"id": string;"kid_id": string;"points_awarded": number | null;"proof_path": string | null;"repeat": Database["public"]["Enums"]["quest_repeat"];"size": Database["public"]["Enums"]["quest_size"];"status": Database["public"]["Enums"]["quest_status"];"title": string }; SetofOptions: { from: "*"; to: "quests"; isOneToOne: true; isSetofReturn: false } },
+            "create_family": { Args: { "family_name": string; "parent_name": string }; Returns: { "created_at": string;"id": string;"invite_code": string;"name": string }; SetofOptions: { from: "*"; to: "families"; isOneToOne: true; isSetofReturn: false } },
+            "deliver_purchase": { Args: { "purchase_id": string }; Returns: { "created_at": string;"delivered_at": string | null;"family_id": string;"icon": string;"id": string;"kid_id": string;"name": string;"price": number;"reward_id": string | null;"status": Database["public"]["Enums"]["purchase_status"] }; SetofOptions: { from: "*"; to: "purchases"; isOneToOne: true; isSetofReturn: false } },
+            "family_kids": { Args: { "code": string }; Returns: { "avatar": string; "display_name": string; "id": string }[] },
+            "join_family": { Args: { "code": string; "kid_id": string }; Returns: { "approvals_count": number;"avatar": string;"best_streak": number;"created_at": string;"display_name": string;"family_id": string;"id": string;"last_done_on": string | null;"lifetime_points": number;"role": Database["public"]["Enums"]["member_role"];"streak": number;"user_id": string | null;"wallet_points": number }; SetofOptions: { from: "*"; to: "members"; isOneToOne: true; isSetofReturn: false } },
+            "review_claim": { Args: { "approve": boolean; "quest_id": string }; Returns: { "approved_at": string | null;"category": Database["public"]["Enums"]["quest_category"];"chest_gold": number | null;"claimed_at": string | null;"created_at": string;"due_at": string;"family_id": string;"gold": number;"id": string;"kid_id": string;"points_awarded": number | null;"proof_path": string | null;"repeat": Database["public"]["Enums"]["quest_repeat"];"size": Database["public"]["Enums"]["quest_size"];"status": Database["public"]["Enums"]["quest_status"];"title": string }; SetofOptions: { from: "*"; to: "quests"; isOneToOne: true; isSetofReturn: false } }
           }
           Enums: {
-            "member_role": "parent"|"kid","quest_category": "dishes"|"trash"|"room"|"laundry"|"pets"|"homework"|"other","quest_size": "S"|"M"|"L","quest_status": "open"|"claimed"|"done"
+            "member_role": "parent"|"kid","purchase_status": "pending"|"delivered","quest_category": "dishes"|"trash"|"room"|"laundry"|"pets"|"homework"|"other","quest_repeat": "none"|"daily"|"weekly","quest_size": "S"|"M"|"L","quest_status": "open"|"claimed"|"done"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -312,7 +163,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "member_role": ["parent", "kid"],"quest_category": ["dishes", "trash", "room", "laundry", "pets", "homework", "other"],"quest_size": ["S", "M", "L"],"quest_status": ["open", "claimed", "done"]
+            "member_role": ["parent", "kid"],"purchase_status": ["pending", "delivered"],"quest_category": ["dishes", "trash", "room", "laundry", "pets", "homework", "other"],"quest_repeat": ["none", "daily", "weekly"],"quest_size": ["S", "M", "L"],"quest_status": ["open", "claimed", "done"]
           }
         }
 } as const

@@ -94,8 +94,8 @@ function KidRoot({ me: initial }: { me: Member }) {
   return (
     <KidHome
       quests={quests}
-      lifetimePoints={me.lifetimePoints}
-      walletPoints={me.walletPoints}
+      xp={me.xp}
+      gold={me.gold}
       now={now}
       onClaim={claim}
     />
