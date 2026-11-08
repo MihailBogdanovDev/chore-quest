@@ -127,3 +127,11 @@ export async function buyReward(rewardId: string): Promise<string> {
 export async function deliverPurchase(purchaseId: string): Promise<void> {
   unwrap(await supabase.rpc('deliver_purchase', { purchase_id: purchaseId }))
 }
+
+/** Quests approved since `since` (epoch ms), for the parent stats card. */
+export async function listDoneQuests(since: number): Promise<Quest[]> {
+  const rows = unwrap(
+    await supabase.from('quests').select().eq('status', 'done').gte('approved_at', new Date(since).toISOString()),
+  )
+  return rows.map(toQuest)
+}
