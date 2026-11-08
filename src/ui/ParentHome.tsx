@@ -1,139 +1,98 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
-  addKid,
   getFamily,
+  listDoneQuests,
   listFamilyQuests,
   listKids,
-  postQuest,
-  reviewClaim,
+  listPurchases,
+  listRewards,
   signOut,
   subscribeFamily,
-  type Family,
-  type FamilyQuest,
-  type Member,
 } from '../data'
-import { AVATARS } from './avatars'
-import { ClaimList } from './ClaimList'
-import { PasswordForm } from './PasswordForm'
-import { QuestBoard } from './QuestBoard'
-import { QuestForm } from './QuestForm'
+import { Panel, PixelButton, TabBar } from './kit'
+import { Approvals } from './parent/Approvals'
+import { Family } from './parent/Family'
+import { Merchant } from './parent/Merchant'
+import { Quests } from './parent/Quests'
+import type { ParentData } from './parent/shared'
 import './screens.css'
-import { useAction } from './useAction'
 
 const TICK_MS = 30_000
+type Tab = 'approvals' | 'quests' | 'merchant' | 'family'
 
+/** "Quest Giver" shell: four tabs. */
 export function ParentHome() {
-  const [family, setFamily] = useState<Family | null>(null)
-  const [kids, setKids] = useState<Member[]>([])
-  const [quests, setQuests] = useState<FamilyQuest[]>([])
+  const [data, setData] = useState<Omit<ParentData, 'reload'> | null>(null)
+  const [tab, setTab] = useState<Tab>('approvals')
   const [now, setNow] = useState(() => Date.now())
-  const [name, setName] = useState('')
-  const [avatar, setAvatar] = useState('knight')
-  const [passwordSaved, setPasswordSaved] = useState(false)
-  const { run, busy, error } = useAction()
+  const [error, setError] = useState<string | null>(null)
+  const [familyName, setFamilyName] = useState('')
 
   const load = useCallback(async () => {
-    const [f, k, q] = await Promise.all([getFamily(), listKids(), listFamilyQuests()])
-    setFamily(f)
-    setKids(k)
-    setQuests(q)
+    const [f, kids, quests, rewards, purchases, done] = await Promise.all([
+      getFamily(),
+      listKids(),
+      listFamilyQuests(),
+      listRewards(),
+      listPurchases(),
+      listDoneQuests(Date.now() - 30 * 86_400_000),
+    ])
+    setFamilyName(f.name)
+    setData({ familyId: f.id, inviteCode: f.inviteCode, kids, quests, rewards, purchases, done })
     setNow(Date.now())
   }, [])
 
   useEffect(() => {
-    run(load)
+    load().catch((e) => setError(e instanceof Error ? e.message : String(e)))
     const id = setInterval(() => setNow(Date.now()), TICK_MS)
     return () => clearInterval(id)
   }, [load])
 
-  const familyId = family?.id
+  const familyId = data?.familyId
   useEffect(() => {
     if (!familyId) return
     return subscribeFamily(familyId, () => void load().catch(console.error))
   }, [familyId, load])
 
-  const submitKid = (e: FormEvent) => {
-    e.preventDefault()
-    run(async () => {
-      await addKid(name, avatar)
-      setName('')
-      setKids(await listKids())
-    })
-  }
+  if (!data)
+    return (
+      <main className="screen night">
+        {error ? <p role="alert" className="err">{error}</p> : <p>Loading the kingdom…</p>}
+      </main>
+    )
 
-  if (!family) return <main className="screen">{error ? <p role="alert">{error}</p> : <p>Loading…</p>}</main>
+  const full: ParentData = { ...data, reload: load }
+  const badge =
+    data.quests.filter((q) => q.status === 'claimed').length + data.purchases.filter((p) => p.status === 'pending').length
 
   return (
-    <main className="screen">
-      <h1>{family.name}</h1>
-
-      <section className="card">
-        <h2>Waiting for you</h2>
-        <ClaimList quests={quests} kids={kids} onReview={async (id, approve) => {
-          await reviewClaim(id, approve)
-          await load()
-        }} />
-      </section>
-
-      <section className="card">
-        <h2>Post a quest</h2>
-        <QuestForm kids={kids} now={now} onPost={async (quest) => {
-          await postQuest(quest)
-          await load()
-        }} />
-      </section>
-
-      <section className="card">
-        <h2>Monsters out there</h2>
-        <QuestBoard quests={quests} kids={kids} now={now} />
-      </section>
-
-      <section className="card">
-        <h2>Kids</h2>
-        <p>
-          Kids join with code <span className="invite-code inline">{family.inviteCode}</span>
-        </p>
-        <ul className="kid-list" aria-label="Kids">
-          {kids.map((k) => (
-            <li key={k.id}>
-              {AVATARS[k.avatar] ?? '🙂'} {k.displayName} · {k.walletPoints}P{' '}
-              <span className="tag">{k.joined ? 'joined' : 'waiting'}</span>
-            </li>
-          ))}
-        </ul>
-        <form className="stack" onSubmit={submitKid}>
-          <label>
-            Kid name
-            <input required maxLength={30} value={name} onChange={(e) => setName(e.target.value)} />
-          </label>
-          <label>
-            Avatar
-            <select value={avatar} onChange={(e) => setAvatar(e.target.value)}>
-              {Object.entries(AVATARS).map(([key, icon]) => (
-                <option key={key} value={key}>
-                  {icon} {key}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button className="big" disabled={busy}>
-            Add kid
-          </button>
-        </form>
-        {error && <p role="alert">{error}</p>}
-      </section>
-
-      <section className="card">
-        <h2>Password</h2>
-        <p>Set or change the password you log in with.</p>
-        <PasswordForm onSaved={() => setPasswordSaved(true)} />
-        {passwordSaved && <p>Password saved.</p>}
-      </section>
-
-      <button className="link" onClick={() => signOut()}>
-        Sign out
-      </button>
+    <main className="screen night parent">
+      <header className="phead">
+        <Panel variant="wood" className="phead__panel">
+          <div>
+            <small>Quest Giver</small>
+            <h1>{familyName}</h1>
+          </div>
+          <PixelButton variant="ghost" className="phead__out" onClick={() => signOut()}>
+            Sign out
+          </PixelButton>
+        </Panel>
+      </header>
+      {tab === 'approvals' && <Approvals data={full} />}
+      {tab === 'quests' && <Quests data={full} now={now} />}
+      {tab === 'merchant' && <Merchant data={full} />}
+      {tab === 'family' && <Family data={full} />}
       <p className="version">version {__APP_VERSION__}</p>
+      <TabBar
+        active={tab}
+        onChange={(t) => setTab(t as Tab)}
+        items={[
+          { id: 'approvals', label: 'Approvals', icon: 'check', badge },
+          { id: 'quests', label: 'Quests', icon: 'scroll' },
+          { id: 'merchant', label: 'Merchant', icon: 'shop' },
+          { id: 'family', label: 'Family', icon: 'keep' },
+        ]}
+      />
     </main>
   )
 }

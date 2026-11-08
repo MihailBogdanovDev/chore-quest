@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { updatePassword } from '../data'
+import { PixelButton } from './kit'
 import { checkPassword } from './passwords'
 import { useAction } from './useAction'
 
@@ -25,16 +26,16 @@ export function PasswordForm({ onSaved }: { onSaved: () => void }) {
     <form className="stack" onSubmit={submit}>
       <label>
         New password
-        <input type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <input className="px-input" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
       </label>
       <label>
         Repeat password
-        <input type="password" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} />
+        <input className="px-input" type="password" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} />
       </label>
-      <button className="big" disabled={busy}>
+      <PixelButton type="submit" variant="gold" block disabled={busy}>
         Save password
-      </button>
-      {error && <p role="alert">{error}</p>}
+      </PixelButton>
+      {error && <p role="alert" className="err">{error}</p>}
     </form>
   )
 }

@@ -1,19 +1,13 @@
 import { expect, test } from 'vitest'
-import type { HpBand, MonsterKind, Tier } from '../core'
-import { BAND_TINT, MONSTER_COLOR, TIER_ORDER, TIER_WIDTH } from './palette'
+import type { MonsterKind, Tier } from '../core'
+import { MONSTER_COLOR, TIER_ORDER, TIER_WIDTH } from './palette'
 
 const kinds: MonsterKind[] = [
   'water-slime', 'garbage-golem', 'dust-beast', 'sock-ghost', 'mud-critter', 'paper-imp', 'goblin',
 ]
-const bands: HpBand[] = ['clean', 'dirty', 'cracked', 'wrecked', 'ruined']
 
-test('every monster has a burst color and every band a tint', () => {
+test('every monster has a burst color', () => {
   for (const k of kinds) expect(MONSTER_COLOR[k]).toBeTypeOf('number')
-  for (const b of bands) expect(BAND_TINT[b]).toBeTypeOf('number')
-})
-
-test('a clean base is drawn untinted', () => {
-  expect(BAND_TINT.clean).toBe(0xffffff)
 })
 
 test('base grows with every tier', () => {

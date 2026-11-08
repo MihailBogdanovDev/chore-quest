@@ -1,16 +1,19 @@
 import * as Phaser from 'phaser'
-import type { BaseView } from '../core'
-import { HEIGHT, HomeScene, WIDTH } from './HomeScene'
+import { HEIGHT, HomeScene, WIDTH, type KeepView } from './HomeScene'
+
+export type { KeepView, KeepMonster } from './HomeScene'
 
 export interface GameHandle {
-  setView(view: BaseView): void
+  setView(view: KeepView): void
+  /** Plays the dash, slash and poof on a monster. Resolves when it is gone. */
+  slay(questId: string): Promise<void>
   destroy(): void
 }
 
-/** Mounts the base scene into `parent`. The only entry point React uses. */
+/** Mounts the keep scene into `parent`. The only entry point React uses. */
 export function createGame(
   parent: HTMLElement,
-  view: BaseView,
+  view: KeepView,
   onMonsterTap: (questId: string) => void,
 ): GameHandle {
   const scene = new HomeScene(view, onMonsterTap)
@@ -20,12 +23,13 @@ export function createGame(
     width: WIDTH,
     height: HEIGHT,
     pixelArt: true,
-    backgroundColor: '#8ecae6',
+    backgroundColor: '#1b1426',
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_HORIZONTALLY },
     scene,
   })
   return {
     setView: (v) => scene.setView(v),
+    slay: (id) => scene.slay(id),
     destroy: () => game.destroy(true),
   }
 }

@@ -1,147 +1,225 @@
 import * as Phaser from 'phaser'
 import type { BaseView, MonsterView } from '../core'
-import { slainMonsters } from './diff'
-import { BAND_TINT, MONSTER_COLOR, TIER_ORDER, TIER_WIDTH } from './palette'
-import { BASE_SPRITE, baseKey, MONSTER_SPRITE, monsterKey } from './sprites'
+import { MONSTER_COLOR, TIER_ORDER, TIER_WIDTH } from './palette'
+import {
+  BASE_SPRITE, baseKey, BG_SPRITE, HERO_IDS, heroKey, heroSrc, MONSTER_SPRITE, monsterKey,
+} from './sprites'
+
+export interface KeepMonster extends MonsterView {
+  overdue: boolean
+}
+export interface KeepView extends BaseView {
+  monsters: KeepMonster[]
+  /** Avatar id, hero-1..4. */
+  hero: string
+}
 
 export const WIDTH = 320
 export const HEIGHT = 240
-const GROUND_Y = 190
-const BASE_X = 100
-/** Drawn height of a medium monster; S and L scale from it. */
+const HORIZON = 180
+const KEEP_X = 160
+const KEEP_FEET = 200
+const HERO_HOME = { x: 160, y: 232 }
+const HERO_PX = 46
 const MONSTER_PX = 34
-/** Tallest a base may be drawn, so a castle stays under the sky. */
-const MAX_BASE_H = 150
-const MIN_TAP = 36
+const MAX_KEEP_H = 120
+const MIN_TAP = 40
+/** Feet positions around the keep, nearest-the-gate first. */
+const SLOTS: [number, number][] = [
+  [78, 214], [242, 214], [40, 236], [280, 236], [116, 236], [204, 236], [30, 196], [290, 196], [100, 196], [220, 196],
+]
 
-/** Draws one kid's base with the monsters attacking it. Knows nothing about data loading. */
+type Sky = 'day' | 'dusk' | 'night'
+const skyAt = (h: number): Sky => (h >= 7 && h < 17 ? 'day' : (h >= 17 && h < 20) || (h >= 5 && h < 7) ? 'dusk' : 'night')
+const SKY_TINT: Record<Sky, [number, number]> = { day: [0, 0], dusk: [0xe8845a, 0.3], night: [0x0d1040, 0.5] }
+
+/** Draws one kid's keep, hero and the monsters around it. Knows nothing about data loading. */
 export class HomeScene extends Phaser.Scene {
-  private view: BaseView
+  private view: KeepView
   private readonly onMonsterTap: (questId: string) => void
   private layer?: Phaser.GameObjects.Container
-  /** Where each monster was last drawn, so a slain one can burst in place. */
-  private positions = new Map<string, { x: number; y: number }>()
+  private monsters = new Map<string, { c: Phaser.GameObjects.Container; m: KeepMonster; w: number; h: number }>()
+  private bobbers: Phaser.GameObjects.GameObject[] = []
+  private hero?: Phaser.GameObjects.Container
+  private heroImg?: Phaser.GameObjects.Image
+  private tint?: Phaser.GameObjects.Rectangle
+  private stars: Phaser.GameObjects.GameObject[] = []
+  private sky?: Sky
+  private shown = ''
+  private busy = false
 
-  constructor(view: BaseView, onMonsterTap: (questId: string) => void) {
+  constructor(view: KeepView, onMonsterTap: (questId: string) => void) {
     super('home')
     this.view = view
     this.onMonsterTap = onMonsterTap
   }
 
   preload() {
+    this.load.image('bg', BG_SPRITE)
     for (const tier of TIER_ORDER) this.load.image(baseKey(tier), BASE_SPRITE[tier])
     for (const [kind, path] of Object.entries(MONSTER_SPRITE)) this.load.image(monsterKey(kind as MonsterView['kind']), path)
+    for (const id of HERO_IDS) this.load.image(heroKey(id), heroSrc(id))
   }
 
   create() {
-    this.drawBackdrop()
+    this.add.image(0, 0, 'bg').setOrigin(0).setDepth(0)
+    const g = this.add.graphics().setDepth(0)
+    g.fillStyle(0x4f8a3c).fillRect(0, HORIZON, WIDTH, HEIGHT - HORIZON)
+    g.fillStyle(0x5d9d46)
+    for (let y = HORIZON + 6; y < HEIGHT; y += 12) for (let x = (y / 12) % 2 ? 0 : 8; x < WIDTH; x += 16) g.fillRect(x, y, 4, 2)
+    this.tint = this.add.rectangle(0, 0, WIDTH, HEIGHT, 0, 0).setOrigin(0).setDepth(1)
+
+    this.heroImg = this.add.image(0, 0, heroKey(this.view.hero)).setOrigin(0.5, 1)
+    this.heroImg.setScale(HERO_PX / this.heroImg.height)
+    const shadow = this.add.ellipse(0, 0, 22, 6, 0, 0.3)
+    this.hero = this.add.container(HERO_HOME.x, HERO_HOME.y, [shadow, this.heroImg]).setDepth(HERO_HOME.y + 100)
+    this.idleHero()
+    this.applySky()
     this.redraw()
   }
 
-  setView(view: BaseView) {
-    const slain = slainMonsters(this.view.monsters, view.monsters)
-    const lastSeen = new Map(this.positions)
+  setView(view: KeepView) {
+    const key = JSON.stringify(view)
     this.view = view
-    if (!this.sys.isActive()) return
+    if (!this.sys.isActive() || this.busy || key === this.shown) return
     this.redraw()
-    for (const m of slain) this.burst(m, lastSeen.get(m.questId))
+  }
+
+  private idleHero() {
+    if (!this.heroImg) return
+    this.tweens.killTweensOf(this.heroImg)
+    this.heroImg.y = 0
+    this.tweens.add({ targets: this.heroImg, y: -2, duration: 450, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' })
+  }
+
+  private applySky() {
+    const sky = skyAt(new Date().getHours())
+    if (sky === this.sky) return
+    this.sky = sky
+    const [color, alpha] = SKY_TINT[sky]
+    this.tint?.setFillStyle(color, alpha)
+    this.stars.forEach((s) => s.destroy())
+    this.stars = []
+    if (sky !== 'night') return
+    for (let i = 0; i < 28; i++) {
+      const s = this.add.rectangle(Phaser.Math.Between(4, WIDTH - 4), Phaser.Math.Between(4, 130), 2, 2, 0xffffff).setDepth(2)
+      this.tweens.add({ targets: s, alpha: 0.2, duration: Phaser.Math.Between(500, 1500), yoyo: true, repeat: -1, delay: i * 70 })
+      this.stars.push(s)
+    }
+    this.stars.push(this.add.circle(268, 34, 9, 0xfff3c4).setDepth(2), this.add.circle(272, 31, 8, 0x1d2150).setDepth(2))
   }
 
   private redraw() {
-    // Only stop the idle bobbing of monsters being replaced; a running burst keeps going.
-    this.layer?.list.forEach((o) => this.tweens.killTweensOf(o))
+    this.shown = JSON.stringify(this.view)
+    this.applySky()
+    this.bobbers.forEach((o) => this.tweens.killTweensOf(o))
+    this.bobbers = []
     this.layer?.destroy()
-    this.layer = this.add.container(0, 0)
-    this.positions.clear()
-    this.layer.add(this.drawBase())
-    this.view.monsters.forEach((m, i) => this.layer!.add(this.drawMonster(m, i)))
-  }
+    this.monsters.clear()
+    this.layer = this.add.container(0, 0).setDepth(10)
+    const { tier, hero } = this.view
 
-  private drawBackdrop() {
-    const g = this.add.graphics()
-    g.fillStyle(0x8ecae6).fillRect(0, 0, WIDTH, GROUND_Y)
-    g.fillStyle(0x6c7a89).fillTriangle(-20, GROUND_Y, 70, 70, 160, GROUND_Y)
-    g.fillStyle(0x5b6776).fillTriangle(110, GROUND_Y, 220, 50, 340, GROUND_Y)
-    g.fillStyle(0xffffff).fillTriangle(56, 84, 70, 70, 84, 84).fillTriangle(204, 66, 220, 50, 236, 66)
-    g.fillStyle(0x7cb342).fillRect(0, GROUND_Y, WIDTH, HEIGHT - GROUND_Y)
-  }
-
-  private drawBase(): Phaser.GameObjects.Container {
-    const { tier, band } = this.view
-    const img = this.add.image(BASE_X, GROUND_Y, baseKey(tier)).setOrigin(0.5, 1).setTint(BAND_TINT[band])
-    let w = TIER_WIDTH[tier]
+    const img = this.add.image(KEEP_X, KEEP_FEET, baseKey(tier)).setOrigin(0.5, 1)
+    let w = TIER_WIDTH[tier] * 1.25
     let h = (w * img.height) / img.width
-    if (h > MAX_BASE_H) [w, h] = [(w * MAX_BASE_H) / h, MAX_BASE_H]
+    if (h > MAX_KEEP_H) [w, h] = [(w * MAX_KEEP_H) / h, MAX_KEEP_H]
     img.setDisplaySize(w, h)
-    if (band === 'ruined') {
-      // Only the bottom of the walls is left standing.
-      img.setCrop(0, img.height * 0.6, img.width, img.height * 0.4)
-      h *= 0.4
-    }
-    const g = this.add.graphics()
-    // Keep the grime on the walls, not the transparent margin around the sprite.
-    this.drawDamage(g, BASE_X - w * 0.35, GROUND_Y - h * 0.75, w * 0.7, h * 0.75)
-    return this.add.container(0, 0, [img, g])
+    this.layer.add(this.add.ellipse(KEEP_X, KEEP_FEET, w * 0.9, 8, 0, 0.25))
+    this.layer.add(img)
+
+    if (this.heroImg && this.heroImg.texture.key !== heroKey(hero)) this.heroImg.setTexture(heroKey(hero))
+    this.view.monsters.forEach((m, i) => this.drawMonster(m, i))
   }
 
-  private drawDamage(g: Phaser.GameObjects.Graphics, left: number, top: number, w: number, h: number) {
-    const { band } = this.view
-    if (band === 'clean') return
-    // Grime spots for every damaged band.
-    g.fillStyle(0x4e3b2a, 0.5)
-    for (let i = 0; i < 4; i++) g.fillCircle(left + ((i * 37) % w), top + h * 0.3 + ((i * 13) % (h * 0.6)), 3)
-    if (band === 'cracked' || band === 'wrecked') {
-      g.lineStyle(1, 0x2b2118)
-      g.lineBetween(left + w * 0.2, top + 4, left + w * 0.3, top + h * 0.6)
-      g.lineBetween(left + w * 0.7, top + h * 0.2, left + w * 0.62, top + h * 0.8)
+  private drawMonster(m: KeepMonster, i: number) {
+    const [sx, sy] = SLOTS[i % SLOTS.length]
+    const x = sx + Math.floor(i / SLOTS.length) * 12
+    const h = MONSTER_PX * m.scale
+    const c = this.add.container(x, sy).setDepth(sy)
+    const body = this.add.image(0, 0, monsterKey(m.kind)).setOrigin(0.5, 1)
+    body.setScale(h / body.height)
+    const w = body.displayWidth
+    c.add([this.add.ellipse(0, 0, w * 0.8, 5, 0, 0.3), body])
+    this.bobbers.push(body)
+
+    if (m.claimed) {
+      body.setTint(0x8a8fa8).setAlpha(0.85)
+      c.add(this.add.rectangle(0, -h * 0.5, w + 6, 3, 0xb9bfcc).setAngle(18).setStrokeStyle(1, 0x333344))
+      c.add(this.add.rectangle(0, -h * 0.4, w + 6, 3, 0xb9bfcc).setAngle(-18).setStrokeStyle(1, 0x333344))
+      const z = this.add.text(w / 2 - 2, -h - 4, 'Zzz', { fontFamily: '"Press Start 2P", monospace', fontSize: '7px', color: '#cfd8ff' }).setOrigin(0.5)
+      c.add(z)
+      this.bobbers.push(z)
+      this.tweens.add({ targets: z, y: z.y - 5, alpha: 0.3, duration: 900, yoyo: true, repeat: -1 })
+    } else if (m.overdue) {
+      body.setTint(0xff7060)
+      const bang = this.add.text(0, -h - 6, '!', { fontFamily: '"Press Start 2P", monospace', fontSize: '9px', color: '#ff4030', stroke: '#2a1a10', strokeThickness: 3 }).setOrigin(0.5)
+      c.add(bang)
+      this.bobbers.push(bang)
+      this.tweens.add({ targets: body, x: 1.5, duration: 55, yoyo: true, repeat: -1 })
+      this.tweens.add({ targets: bang, y: bang.y - 3, duration: 300, yoyo: true, repeat: -1 })
+    } else {
+      this.tweens.add({ targets: body, y: -3, duration: 480 + i * 60, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' })
     }
-    if (band === 'wrecked') {
-      g.fillStyle(0x1f1a14).fillRect(left + w * 0.6, top + 2, 10, 8)
-    }
-    if (band === 'ruined') {
-      g.fillStyle(0x6e6259)
-      for (let i = 0; i < 6; i++) g.fillRect(left - 8 + i * (w / 5), GROUND_Y - 5, 8, 5)
-    }
+
+    const hw = Math.max(w, MIN_TAP)
+    const hh = Math.max(h, MIN_TAP)
+    const zone = this.add.rectangle(0, -hh / 2, hw, hh, 0xffffff, 0.001).setInteractive({ useHandCursor: true })
+    zone.on('pointerdown', () => this.onMonsterTap(m.questId))
+    c.add(zone)
+    this.layer!.add(c)
+    this.monsters.set(m.questId, { c, m, w, h })
   }
 
-  /** Death animation: the monster pops into pixels that fly out and fade. */
-  private burst(m: MonsterView, at = { x: 220, y: GROUND_Y - 14 }) {
-    const pixels = 10
-    for (let i = 0; i < pixels; i++) {
-      const angle = (i / pixels) * Math.PI * 2
-      const dist = 24 + (MONSTER_PX / 2) * m.scale
-      const px = this.add.rectangle(at.x, at.y, 4, 4, MONSTER_COLOR[m.kind])
+  /** Hero dashes in, slashes, the monster pops into smoke. */
+  slay(questId: string): Promise<void> {
+    const t = this.monsters.get(questId)
+    const hero = this.hero
+    if (!t || !hero || !this.heroImg || !this.sys.isActive()) return Promise.resolve()
+    this.busy = true
+    return new Promise((resolve) => {
+      const { c, m, w, h } = t
+      const left = c.x < HERO_HOME.x
+      this.heroImg!.setFlipX(left)
+      const stand = { x: c.x + (left ? 1 : -1) * (w / 2 + 12), y: c.y }
       this.tweens.add({
-        targets: px,
-        x: at.x + Math.cos(angle) * dist,
-        y: at.y + Math.sin(angle) * dist,
-        alpha: 0,
-        duration: 600,
-        ease: 'Quad.easeOut',
-        onComplete: () => px.destroy(),
+        targets: hero, x: stand.x, y: stand.y, duration: 220, ease: 'Quad.easeIn',
+        onComplete: () => {
+          const cx = c.x
+          const cy = c.y - h / 2
+          // slash streak
+          const streak = this.add.rectangle(cx, cy, 4, h + 26, 0xffffff).setAngle(40).setDepth(900).setScale(1, 0.1)
+          this.tweens.add({ targets: streak, scaleY: 1, duration: 70, onComplete: () => this.tweens.add({ targets: streak, alpha: 0, duration: 120, onComplete: () => streak.destroy() }) })
+          const flash = this.add.rectangle(cx, cy, w + 8, h + 8, 0xffffff).setDepth(901)
+          this.tweens.add({ targets: flash, alpha: 0, duration: 160, onComplete: () => flash.destroy() })
+          this.cameras.main.shake(180, 0.012)
+          this.tweens.add({ targets: this.heroImg, x: (left ? -1 : 1) * -6, duration: 70, yoyo: true })
+          this.time.delayedCall(140, () => {
+            this.poof(cx, cy, m)
+            this.tweens.add({ targets: c, scale: 0, alpha: 0, duration: 140, onComplete: () => c.setVisible(false) })
+            this.tweens.add({
+              targets: hero, x: HERO_HOME.x, y: HERO_HOME.y, duration: 280, delay: 180, ease: 'Quad.easeOut',
+              onComplete: () => { this.heroImg?.setFlipX(false); this.busy = false; this.idleHero(); this.setView(this.view) },
+            })
+            this.time.delayedCall(260, () => resolve())
+          })
+        },
+      })
+    })
+  }
+
+  private poof(x: number, y: number, m: MonsterView) {
+    const colors = [0xffffff, 0xd9dde6, 0xaab0bf, MONSTER_COLOR[m.kind]]
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2 + Math.random() * 0.4
+      const d = 22 + Math.random() * 26
+      const size = Phaser.Math.Between(4, 9)
+      const p = this.add.rectangle(x, y, size, size, colors[i % colors.length]).setDepth(900)
+      this.tweens.add({
+        targets: p, x: x + Math.cos(a) * d, y: y + Math.sin(a) * d - 10, alpha: 0, scale: 1.8,
+        duration: 650, ease: 'Quad.easeOut', onComplete: () => p.destroy(),
       })
     }
-  }
-
-  private drawMonster(m: MonsterView, index: number): Phaser.GameObjects.Container {
-    const h = MONSTER_PX * m.scale
-    const col = index % 3
-    const row = Math.floor(index / 3)
-    const x = 190 + col * 44 + row * 18
-    const y = GROUND_Y - h / 2 + row * 14
-    const c = this.add.container(x, y)
-    this.positions.set(m.questId, { x, y })
-
-    const body = this.add.image(0, 0, monsterKey(m.kind))
-    body.setScale(h / body.height)
-    c.add(body)
-
-    // Small monsters still get a finger-sized tap target.
-    const hit = Math.max(body.displayWidth, h, MIN_TAP)
-    c.setSize(hit, hit).setInteractive({ useHandCursor: true })
-    c.on('pointerdown', () => this.onMonsterTap(m.questId))
-    if (m.claimed) c.setAlpha(0.5)
-    else this.tweens.add({ targets: c, y: y - 3, duration: 500 + index * 70, yoyo: true, repeat: -1 })
-    return c
+    const pow = this.add.text(x, y - 18, 'POW!', { fontFamily: '"Press Start 2P", monospace', fontSize: '12px', color: '#f4c542', stroke: '#2a1a10', strokeThickness: 4 }).setOrigin(0.5).setDepth(902)
+    this.tweens.add({ targets: pow, y: pow.y - 18, scale: 1.4, alpha: 0, duration: 650, onComplete: () => pow.destroy() })
   }
 }

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { sendPasswordReset, signInWithPassword, signUp } from '../data'
+import { PixelButton } from './kit'
 import { checkPassword } from './passwords'
 import './screens.css'
 import { useAction } from './useAction'
@@ -55,20 +56,21 @@ export function ParentAuth() {
       <form className="stack" onSubmit={submit}>
         <label>
           Email
-          <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input className="px-input" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
         <label>
           Password
           <input
+            className="px-input"
             type="password"
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
         </label>
-        <button className="big" disabled={busy}>
+        <PixelButton type="submit" variant="gold" block disabled={busy}>
           {mode === 'login' ? 'Log in' : 'Create account'}
-        </button>
+        </PixelButton>
       </form>
       {mode === 'login' && (
         <button className="link" disabled={busy} onClick={forgot}>
@@ -76,7 +78,7 @@ export function ParentAuth() {
         </button>
       )}
       {notice && <p>{notice}</p>}
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert" className="err">{error}</p>}
     </div>
   )
 }

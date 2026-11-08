@@ -1,120 +1,129 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { buildBaseView, HOUR, monsterFor, nextDrop, pointsAt, type Quest } from '../core'
-import { createGame, type GameHandle } from '../game/createGame'
-import './KidHome.css'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import { buildBaseView, isOverdue, type Purchase, type Quest, type Reward } from '../core'
+import type { Member } from '../data'
+import type { GameHandle, KeepView } from '../game/createGame'
+import { buzz, FloatText, Panel, PixelButton, sfx, TabBar } from './kit'
+import { Bag } from './kid/Bag'
+import { BountyBoard } from './kid/BountyBoard'
+import { BountySheet, type SlayPhase } from './kid/BountySheet'
+import { Hud } from './kid/Hud'
+import { Keep } from './kid/Keep'
+import { Merchant } from './kid/Merchant'
+import { Reveal, useApprovalReveal } from './kid/Reveal'
+import { wait } from './kid/util'
+import './kid/kid.css'
+
+type Tab = 'keep' | 'bounties' | 'merchant' | 'bag'
 
 interface Props {
+  me: Member
   quests: Quest[]
-  lifetimePoints: number
-  walletPoints: number
+  rewards: Reward[]
+  purchases: Purchase[]
   now: number
-  onClaim: (questId: string) => void
+  onClaim: (questId: string) => Promise<void>
+  onBuy: (rewardId: string) => Promise<void>
 }
 
-type Panel = { type: 'list' } | { type: 'quest'; id: string } | null
-
-/** "25P → 22P in 3h": what the quest is worth now and when that drops. */
-function worthText(q: Quest, now: number): string {
-  if (q.status === 'done' && q.claimedAt !== null) return `Slain! +${pointsAt(q, q.claimedAt)}P`
-  if (q.status === 'claimed' && q.claimedAt !== null) return `${pointsAt(q, q.claimedAt)}P locked in`
-  const points = pointsAt(q, now)
-  const drop = nextDrop(q, now)
-  if (!drop) return `${points}P`
-  return `${points}P → ${drop.points}P in ${Math.ceil((drop.at - now) / HOUR)}h`
-}
-
-export function KidHome({ quests, lifetimePoints, walletPoints, now, onClaim }: Props) {
-  const view = useMemo(() => buildBaseView(quests, lifetimePoints, now), [quests, lifetimePoints, now])
-  const [panel, setPanel] = useState<Panel>(null)
-  const sceneEl = useRef<HTMLDivElement>(null)
+export function KidHome({ me, quests, rewards, purchases, now, onClaim, onBuy }: Props) {
+  const [tab, setTab] = useState<Tab>('keep')
+  const [sheetId, setSheetId] = useState<string | null>(null)
+  const [phase, setPhase] = useState<SlayPhase>(null)
+  const [slaying, setSlaying] = useState(false)
+  const [toast, setToast] = useState<{ id: number; text: string } | null>(null)
+  const [float, setFloat] = useState<number | null>(null)
   const game = useRef<GameHandle | null>(null)
-  const firstView = useRef(view)
+  const { steps, clear } = useApprovalReveal(me, quests)
 
-  useEffect(() => {
-    if (!sceneEl.current) return
-    game.current = createGame(sceneEl.current, firstView.current, (id) => setPanel({ type: 'quest', id }))
-    return () => {
-      game.current?.destroy()
-      game.current = null
-    }
+  const live = useMemo(() => quests.filter((q) => q.status !== 'done' && q.createdAt <= now), [quests, now])
+  const open = live.filter((q) => q.status === 'open').sort((a, b) => a.dueAt - b.dueAt)
+  const claimed = live.filter((q) => q.status === 'claimed')
+  const view: KeepView = useMemo(() => {
+    const base = buildBaseView(quests, me.xp, now)
+    const overdue = new Set(live.filter((q) => isOverdue(q, now)).map((q) => q.id))
+    return { ...base, hero: me.avatar, monsters: base.monsters.map((m) => ({ ...m, overdue: overdue.has(m.questId) })) }
+  }, [quests, me.xp, me.avatar, now, live])
+
+  const say = useCallback((text: string) => {
+    const id = Date.now()
+    setToast({ id, text })
+    setTimeout(() => setToast((t) => (t?.id === id ? null : t)), 3200)
   }, [])
 
-  useEffect(() => {
-    game.current?.setView(view)
-  }, [view])
+  const selected = quests.find((q) => q.id === sheetId)
 
-  const live = quests.filter((q) => q.status !== 'done' && q.createdAt <= now)
-  const openCount = live.filter((q) => q.status === 'open').length
-  const selected = panel?.type === 'quest' ? quests.find((q) => q.id === panel.id) : undefined
+  const slay = async (q: Quest) => {
+    if (slaying) return
+    setSlaying(true)
+    sfx.slash()
+    buzz([20, 30, 60])
+    if (tab === 'keep' && game.current) {
+      setSheetId(null)
+      await game.current.slay(q.id)
+    } else {
+      setPhase('hit')
+      await wait(350)
+      setPhase('poof')
+      await wait(650)
+    }
+    setSheetId(null)
+    setPhase(null)
+    setFloat(Date.now())
+    say(`Monster stunned! +${q.gold} gold when approved`)
+    try {
+      await onClaim(q.id)
+    } catch {
+      sfx.error()
+      say('Hmm, that did not work. Try again!')
+    }
+    setSlaying(false)
+  }
 
   return (
-    <main className="kid-home">
-      <header className="top-bar">
-        <span className="points">{walletPoints}P</span>
-        <span className="tier">{view.tier}</span>
-        <button className="quest-button" aria-label={`Quests (${openCount})`} onClick={() => setPanel({ type: 'list' })}>
-          !<span className="badge">{openCount}</span>
-        </button>
-      </header>
-
-      <div className="scene" ref={sceneEl} />
-
-      <div className="hp">
-        <div
-          className={`hp-bar band-${view.band}`}
-          role="progressbar"
-          aria-label="Base HP"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={view.hp}
-        >
-          <div className="hp-fill" style={{ width: `${view.hp}%` }} />
-        </div>
-        <span className="hp-label">
-          {view.hp} HP · {view.band}
-        </span>
+    <main className="kid-app">
+      <Hud me={me} />
+      <div className="kid-page">
+        {tab === 'keep' && (
+          <>
+            <Keep view={view} onTap={setSheetId} handle={game} />
+            <Panel variant="wood" className="kid-keepinfo">
+              {open.length > 0 ? (
+                <p><b>{open.length}</b> monster{open.length > 1 ? 's' : ''} lurking! Tap one to fight.</p>
+              ) : claimed.length > 0 ? (
+                <p>All stunned! Waiting for the Quest Giver.</p>
+              ) : (
+                <p>No monsters! The kingdom is safe.</p>
+              )}
+              <PixelButton variant="gold" onClick={() => setTab('bounties')}>Bounty Board</PixelButton>
+            </Panel>
+          </>
+        )}
+        {tab === 'bounties' && <BountyBoard open={open} claimed={claimed} now={now} hero={me.avatar} onOpen={setSheetId} />}
+        {tab === 'merchant' && <Merchant rewards={rewards} gold={me.gold} onBuy={onBuy} toast={say} />}
+        {tab === 'bag' && <Bag me={me} purchases={purchases} />}
       </div>
 
-      <nav className="bottom-bar">
-        <button className="home-button" aria-label="Home" onClick={() => setPanel(null)} />
-      </nav>
-
-      {panel && (
-        <div className="sheet-backdrop" onClick={() => setPanel(null)}>
-          <section className="sheet" onClick={(e) => e.stopPropagation()}>
-            {panel.type === 'list' && (
-              <>
-                <h2>Quests</h2>
-                <ul className="quest-list">
-                  {live.map((q) => (
-                    <li key={q.id}>
-                      <button onClick={() => setPanel({ type: 'quest', id: q.id })}>
-                        {q.title} <small>{monsterFor(q.category, q.size).name}</small>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-            {selected && (
-              <>
-                <h2>{selected.title}</h2>
-                <p className="monster-name">
-                  {monsterFor(selected.category, selected.size).name} · size {selected.size}
-                </p>
-                <p className="worth">{worthText(selected, now)}</p>
-                {selected.status === 'open' ? (
-                  <button className="slay" onClick={() => onClaim(selected.id)}>
-                    Slay!
-                  </button>
-                ) : selected.status === 'claimed' ? (
-                  <p className="waiting">Waiting for a parent to check</p>
-                ) : null}
-              </>
-            )}
-          </section>
-        </div>
-      )}
+      <BountySheet
+        quest={selected}
+        now={now}
+        phase={phase}
+        busy={slaying}
+        onClose={() => setSheetId(null)}
+        onSlay={() => selected && slay(selected)}
+      />
+      {float !== null && <FloatText key={float} text="STUNNED!" y={Math.round(window.innerHeight * 0.35)} color="#fff" onDone={() => setFloat(null)} />}
+      {toast && <div className="kid-toast" role="status" key={toast.id}>{toast.text}</div>}
+      <TabBar
+        active={tab}
+        onChange={(id) => setTab(id as Tab)}
+        items={[
+          { id: 'keep', label: 'Keep', icon: 'keep' },
+          { id: 'bounties', label: 'Bounties', icon: 'scroll', badge: open.length },
+          { id: 'merchant', label: 'Merchant', icon: 'shop' },
+          { id: 'bag', label: 'Bag', icon: 'bag' },
+        ]}
+      />
+      {steps.length > 0 && <Reveal steps={steps} hero={me.avatar} onDone={clear} />}
     </main>
   )
 }

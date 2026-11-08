@@ -1,4 +1,4 @@
-import { baseHp, hpBand, tierFor, type HpBand, type Tier } from './base'
+import { tierFor, type Tier } from './base'
 import { monsterFor, type MonsterKind } from './monsters'
 import type { Quest, Size } from './types'
 
@@ -11,24 +11,16 @@ export interface MonsterView {
   claimed: boolean
 }
 
-/** Everything the game scene needs to draw a kid's base. */
+/** Everything the game scene needs to draw a kid's keep. */
 export interface BaseView {
   tier: Tier
-  hp: number
-  band: HpBand
   monsters: MonsterView[]
 }
 
-export function buildBaseView(quests: Quest[], lifetimePoints: number, now: number): BaseView {
-  const hp = baseHp(quests, now)
+export function buildBaseView(quests: Quest[], xp: number, now: number): BaseView {
   const monsters = quests
     .filter((q) => q.status !== 'done' && q.createdAt <= now)
     .sort((a, b) => a.createdAt - b.createdAt)
-    .map((q) => ({
-      questId: q.id,
-      ...monsterFor(q.category, q.size),
-      size: q.size,
-      claimed: q.status === 'claimed',
-    }))
-  return { tier: tierFor(lifetimePoints), hp, band: hpBand(hp), monsters }
+    .map((q) => ({ questId: q.id, ...monsterFor(q.category, q.gold), claimed: q.status === 'claimed' }))
+  return { tier: tierFor(xp), monsters }
 }

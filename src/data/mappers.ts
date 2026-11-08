@@ -1,4 +1,4 @@
-import type { Quest } from '../core'
+import type { Purchase, Quest, Reward } from '../core'
 import type { Tables } from './database.types'
 
 export interface Member {
@@ -7,8 +7,13 @@ export interface Member {
   role: 'parent' | 'kid'
   displayName: string
   avatar: string
-  lifetimePoints: number
-  walletPoints: number
+  /** XP: lifetime_points. Never goes down. */
+  xp: number
+  /** Gold: wallet_points. Spent at the merchant. */
+  gold: number
+  streak: number
+  bestStreak: number
+  approvalsCount: number
   /** A device is bound to this member. Always true for parents. */
   joined: boolean
 }
@@ -31,24 +36,18 @@ const msOrNull = (iso: string | null) => (iso === null ? null : ms(iso))
 export function toQuest(row: Tables<'quests'>): Quest {
   return {
     id: row.id,
+    kidId: row.kid_id,
     title: row.title,
     category: row.category,
-    size: row.size,
+    gold: row.gold,
+    repeat: row.repeat,
     createdAt: ms(row.created_at),
     dueAt: ms(row.due_at),
     status: row.status,
     claimedAt: msOrNull(row.claimed_at),
     approvedAt: msOrNull(row.approved_at),
+    chestGold: row.chest_gold,
   }
-}
-
-/** A quest as the parent sees it: which kid it belongs to matters. */
-export interface FamilyQuest extends Quest {
-  kidId: string
-}
-
-export function toFamilyQuest(row: Tables<'quests'>): FamilyQuest {
-  return { ...toQuest(row), kidId: row.kid_id }
 }
 
 export function toMember(row: Tables<'members'>): Member {
@@ -58,12 +57,33 @@ export function toMember(row: Tables<'members'>): Member {
     role: row.role,
     displayName: row.display_name,
     avatar: row.avatar,
-    lifetimePoints: row.lifetime_points,
-    walletPoints: row.wallet_points,
+    xp: row.lifetime_points,
+    gold: row.wallet_points,
+    streak: row.streak,
+    bestStreak: row.best_streak,
+    approvalsCount: row.approvals_count,
     joined: row.user_id !== null,
   }
 }
 
 export function toFamily(row: Tables<'families'>): Family {
   return { id: row.id, name: row.name, inviteCode: row.invite_code }
+}
+
+export function toReward(row: Tables<'rewards'>): Reward {
+  return { id: row.id, name: row.name, icon: row.icon, price: row.price, active: row.active }
+}
+
+export function toPurchase(row: Tables<'purchases'>): Purchase {
+  return {
+    id: row.id,
+    rewardId: row.reward_id,
+    kidId: row.kid_id,
+    name: row.name,
+    icon: row.icon,
+    price: row.price,
+    status: row.status,
+    createdAt: ms(row.created_at),
+    deliveredAt: msOrNull(row.delivered_at),
+  }
 }

@@ -70,12 +70,12 @@ select is((select status::text from public.review_claim(:'quest_id', false)), 'o
 :as_ana
 select public.claim_quest(:'quest_id');
 :as_parent_x
-select is((select points_awarded from public.review_claim(:'quest_id', true)), 25, 'approve on time awards full points');
+select is((select points_awarded from public.review_claim(:'quest_id', true)), 10, 'approve awards the quest gold');
 select results_eq(format($$select lifetime_points, wallet_points from public.members where id = %L$$, :'ana_id'),
-  $$values (25, 25)$$, 'points land on the kid');
+  $$values (10, 10)$$, 'gold and xp land on the kid');
 select throws_ok(format($$select public.review_claim(%L, true)$$, :'quest_id'), 'P0001', 'quest not claimed', 'no double approve');
 select results_eq(format($$select lifetime_points from public.members where id = %L$$, :'ana_id'),
-  $$values (25)$$, 'points awarded once');
+  $$values (10)$$, 'points awarded once');
 
 select * from finish();
 rollback;
