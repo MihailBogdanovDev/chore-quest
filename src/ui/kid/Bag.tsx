@@ -1,8 +1,8 @@
 import { levelFor, tierFor } from '../../core'
 import type { Purchase } from '../../core'
-import type { Member } from '../../data'
+import { signOut, type Member } from '../../data'
 import { BASE_SPRITE } from '../../game/sprites'
-import { Icon, Panel } from '../kit'
+import { Icon, Panel, PixelButton } from '../kit'
 import { heroSrc, nextTier } from './util'
 
 export function Bag({ me, purchases }: { me: Member; purchases: Purchase[] }) {
@@ -11,6 +11,9 @@ export function Bag({ me, purchases }: { me: Member; purchases: Purchase[] }) {
   const next = nextTier(me.xp)
   const pending = purchases.filter((p) => p.status === 'pending')
   const delivered = purchases.filter((p) => p.status === 'delivered')
+  const leave = () => {
+    if (window.confirm('Leave this device? You can join again with the family code.')) signOut().catch(console.error)
+  }
   const item = (p: Purchase) => (
     <li key={p.id} className="kid-loot">
       <Icon name={p.icon} size={40} />
@@ -35,6 +38,10 @@ export function Bag({ me, purchases }: { me: Member; purchases: Purchase[] }) {
       {purchases.length === 0 && <p className="kid-hint">Your bag is empty. Visit the Merchant!</p>}
       {pending.length > 0 && <><h3 className="kid-sub">Waiting to be delivered</h3><Panel><ul className="kid-lootlist">{pending.map(item)}</ul></Panel></>}
       {delivered.length > 0 && <><h3 className="kid-sub">Enjoyed</h3><Panel><ul className="kid-lootlist">{delivered.map(item)}</ul></Panel></>}
+      <PixelButton variant="ghost" block style={{ marginTop: 24 }} onClick={leave}>
+        Leave this device
+      </PixelButton>
+      <p className="kid-hint">Your hero stays safe. Join again any time with the family code.</p>
     </section>
   )
 }
