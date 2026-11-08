@@ -5,6 +5,8 @@ import type { Member } from './../data'
 import { KidHome } from './KidHome'
 import { mockQuests } from './mockQuests'
 
+vi.mock('../data', () => ({ signOut: vi.fn() }))
+
 vi.mock('../game/createGame', () => ({
   createGame: () => ({ setView: vi.fn(), slay: vi.fn().mockResolvedValue(undefined), destroy: vi.fn() }),
 }))
