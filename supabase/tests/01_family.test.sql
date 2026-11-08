@@ -34,14 +34,14 @@ select id as ana_id from public.members where display_name = 'Ana' \gset
 :as_device_1
 select throws_ok($$select public.add_kid('Sneaky', 'knight')$$, 'P0001', 'not a parent', 'non-member cannot add kids');
 select is_empty($$select * from public.family_kids('WRONG1')$$, 'wrong code lists no kids');
-select is((select count(*)::int from public.family_kids(lower(:'code'))), 2, 'code is case-insensitive and lists unbound kids');
+select is((select count(*)::int from public.family_kids(lower(:'code'))), 2, 'code is case-insensitive and lists the kids');
 select is_empty($$select * from public.members$$, 'device sees no members before joining');
 select lives_ok(format($$select public.join_family(%L, %L)$$, :'code', :'ana_id'), 'device joins as Ana');
 select is((select count(*)::int from public.members), 3, 'joined kid sees own family');
 
 :as_device_2
-select throws_ok(format($$select public.join_family(%L, %L)$$, :'code', :'ana_id'), 'P0001', 'invalid code or kid',
-  'second device cannot take a bound kid');
+select lives_ok(format($$select public.join_family(%L, %L)$$, :'code', :'ana_id'),
+  'second device re-claims a bound kid with the family code');
 
 :as_parent_y
 select public.create_family('The Ys', 'Dad');
@@ -49,7 +49,7 @@ select is((select count(*)::int from public.members), 1, 'other family sees only
 
 reset role;
 select is((select user_id from public.members where id = :'ana_id'),
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid, 'Ana stays bound to the first device');
+  'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'::uuid, 'Ana moves to the device that re-claimed her');
 
 select * from finish();
 rollback;
