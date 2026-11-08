@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { findKids, joinFamily, signOut, type KidOption } from '../data'
-import { AVATARS } from './avatars'
-import './screens.css'
+import { PixelButton, Panel } from './kit'
+import { heroSrc } from './kid/util'
+import './kid/kid.css'
 import { useAction } from './useAction'
 
 export function KidJoin({ onJoined }: { onJoined: () => void }) {
@@ -21,45 +22,46 @@ export function KidJoin({ onJoined }: { onJoined: () => void }) {
     })
 
   return (
-    <main className="screen">
-      <h1>Join your family</h1>
-      <form className="stack" onSubmit={find}>
-        <label>
-          Family code
+    <main className="kid-join">
+      <img className="kid-join__logo" src="/art/logo.png" alt="Chore Quest" />
+      <Panel>
+        <form onSubmit={find}>
+          <label className="kid-join__label" htmlFor="family-code">Family code</label>
           <input
+            id="family-code"
+            className="px-input kid-join__code"
             required
             maxLength={6}
             autoCapitalize="characters"
+            autoComplete="off"
+            placeholder="ABC123"
             value={code}
             onChange={(e) => {
               setCode(e.target.value.toUpperCase())
               setKids(null)
             }}
           />
-        </label>
-        <button className="big alt" disabled={busy}>
-          Find my family
-        </button>
-      </form>
+          <PixelButton variant="gold" block type="submit" disabled={busy}>Find my family</PixelButton>
+        </form>
+      </Panel>
 
-      {kids?.length === 0 && <p>No kids found for that code</p>}
+      {kids?.length === 0 && <p className="kid-hint">No kids found for that code</p>}
       {kids && kids.length > 0 && (
-        <section className="card">
-          <h2>Who are you?</h2>
-          <div className="stack">
+        <Panel>
+          <h2 className="kid-join__who">Who are you?</h2>
+          <div className="kid-join__kids">
             {kids.map((k) => (
-              <button key={k.id} className="big" disabled={busy} onClick={() => pick(k)}>
-                {AVATARS[k.avatar] ?? '🙂'} {k.displayName}
+              <button key={k.id} type="button" className="kid-join__kid" disabled={busy} onClick={() => pick(k)}>
+                <img src={heroSrc(k.avatar)} alt="" width={72} height={72} />
+                <span>{k.displayName}</span>
               </button>
             ))}
           </div>
-        </section>
+        </Panel>
       )}
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert" className="kid-join__err">{error}</p>}
 
-      <button className="link" onClick={() => signOut()}>
-        Back
-      </button>
+      <PixelButton variant="ghost" onClick={() => signOut()}>Back</PixelButton>
     </main>
   )
 }

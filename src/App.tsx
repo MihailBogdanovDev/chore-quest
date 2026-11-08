@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { Quest } from './core'
+import type { Purchase, Quest, Reward } from './core'
 import {
+  buyReward,
   claimQuest,
   getMe,
+  listPurchases,
   listQuests,
+  listRewards,
   onAuthChange,
   signInAsKid,
   subscribeFamily,
@@ -65,14 +68,18 @@ export default function App() {
 function KidRoot({ me: initial }: { me: Member }) {
   const [me, setMe] = useState(initial)
   const [now, setNow] = useState(() => Date.now())
-  const [quests, setQuests] = useState<Quest[]>([])
+  const [quests, setQuests] = useState<Quest[] | null>(null)
+  const [rewards, setRewards] = useState<Reward[]>([])
+  const [purchases, setPurchases] = useState<Purchase[]>([])
   const { id, familyId } = initial
 
-  // Points live on the member row, so reload both after any family change.
+  // Gold and XP live on the member row, so reload everything after any family change.
   const load = useCallback(() => {
-    Promise.all([getMe(), listQuests(id)]).then(([m, q]) => {
+    return Promise.all([getMe(), listQuests(id), listRewards(), listPurchases(id)]).then(([m, q, r, p]) => {
       if (m) setMe(m)
       setQuests(q)
+      setRewards(r)
+      setPurchases(p)
       setNow(Date.now())
     }, console.error)
   }, [id])
@@ -87,17 +94,16 @@ function KidRoot({ me: initial }: { me: Member }) {
     }
   }, [familyId, load])
 
-  const claim = (questId: string) => {
-    claimQuest(questId).then(load, console.error)
-  }
-
+  if (!quests) return null
   return (
     <KidHome
+      me={me}
       quests={quests}
-      xp={me.xp}
-      gold={me.gold}
+      rewards={rewards}
+      purchases={purchases}
       now={now}
-      onClaim={claim}
+      onClaim={(questId) => claimQuest(questId).then(load)}
+      onBuy={(rewardId) => buyReward(rewardId).then(load)}
     />
   )
 }
