@@ -6,7 +6,6 @@ import { heroSrc, monsterSrc, readStore, reducedMotion, writeStore } from './uti
 
 export type Step =
   | { kind: 'quest'; q: Quest; xpFrom: number; xpTo: number }
-  | { kind: 'chest'; q: Quest }
   | { kind: 'level'; level: number; title: string; prevTitle: string }
 
 /** Finds approvals the kid has not seen yet and turns them into a queue of reveal steps. */
@@ -33,7 +32,6 @@ export function useApprovalReveal(me: Member, quests: Quest[]) {
     fresh.forEach((q, i) => {
       const span = me.xp - s!.xp
       next.push({ kind: 'quest', q, xpFrom: s!.xp + (span * i) / fresh.length, xpTo: s!.xp + (span * (i + 1)) / fresh.length })
-      if (q.chestGold) next.push({ kind: 'chest', q })
     })
     if (after.level > before.level) next.push({ kind: 'level', level: after.level, title: after.title, prevTitle: before.title })
     seen.current = { t: Math.max(s.t, ...fresh.map((q) => q.approvedAt!)), xp: me.xp }
@@ -115,29 +113,6 @@ function QuestStep({ step, onNext }: { step: Extract<Step, { kind: 'quest' }>; o
   )
 }
 
-function ChestStep({ step, onNext }: { step: Extract<Step, { kind: 'chest' }>; onNext: () => void }) {
-  const [open, setOpen] = useState(false)
-  const ready = useReady(open ? 900 : 300)
-  const bonus = useCountUp(open ? step.q.chestGold ?? 0 : 0, 600)
-  useEffect(() => { buzz(30) }, [])
-  return (
-    <div
-      className="kid-reveal__card"
-      onClick={() => {
-        if (!open) { setOpen(true); sfx.chest(); buzz([30, 30, 80]) } else if (ready) onNext()
-      }}
-    >
-      <h2 className="kid-reveal__title">{open ? 'TREASURE!' : 'A loot chest!'}</h2>
-      <div className={`kid-chest${open ? ' is-open' : ''}`}>
-        <Icon name={open ? 'chest-open' : 'chest-closed'} size={128} />
-        {open && Array.from({ length: 6 }, (_, i) => <Icon key={i} name="sparkle" size={24} className="kid-spark" style={{ ['--a' as string]: `${i * 60}deg` }} />)}
-      </div>
-      {open ? <div className="kid-reveal__gold"><Icon name="coin" size={32} /> +{bonus} bonus gold!</div> : <p className="kid-reveal__what">Tap to open!</p>}
-      <p className={`kid-reveal__tap${open && ready ? ' is-ready' : ''}`}>Tap to continue</p>
-    </div>
-  )
-}
-
 function LevelStep({ step, hero, onNext }: { step: Extract<Step, { kind: 'level' }>; hero: string; onNext: () => void }) {
   const ready = useReady(1200)
   useEffect(() => { sfx.levelUp(); buzz([40, 40, 40, 40, 120]) }, [])
@@ -163,7 +138,6 @@ export function Reveal({ steps, hero, onDone }: { steps: Step[]; hero: string; o
   return (
     <div className="kid-reveal" role="dialog" aria-modal="true">
       {step.kind === 'quest' && <QuestStep key={i} step={step} onNext={next} />}
-      {step.kind === 'chest' && <ChestStep key={i} step={step} onNext={next} />}
       {step.kind === 'level' && <LevelStep key={i} step={step} hero={hero} onNext={next} />}
     </div>
   )

@@ -127,9 +127,6 @@
 .kid-rain { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
 .kid-rain span { position: absolute; top: -30px; animation: kid-fall 1.3s ease-in forwards; opacity: 0; }
 @keyframes kid-fall { 0% { opacity: 1; transform: translateY(0) rotate(0); } 100% { opacity: 1; transform: translateY(105vh) rotate(360deg); } }
-.kid-chest { position: relative; width: 128px; height: 128px; }
-.kid-chest:not(.is-open) { animation: kid-shake .15s infinite; }
-.kid-chest.is-open { animation: kid-pop .4s steps(4); }
 .kid-spark { position: absolute !important; left: 50%; top: 50%; margin: -11px; animation: kid-orbit 1.2s ease-out infinite; }
 @keyframes kid-orbit { 0% { transform: rotate(var(--a)) translateX(30px) scale(.4); opacity: 1; } 100% { transform: rotate(var(--a)) translateX(95px) scale(1.3); opacity: 0; } }
 .kid-levelhero { position: relative; width: 128px; height: 128px; animation: kid-jump .6s ease-in-out infinite; }
