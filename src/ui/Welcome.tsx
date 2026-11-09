@@ -34,7 +34,6 @@ export function Welcome({ onKid }: { onKid: () => Promise<void> }) {
           </button>
         </Panel>
       )}
-      <p className="version">version {__APP_VERSION__}</p>
     </main>
   )
 }

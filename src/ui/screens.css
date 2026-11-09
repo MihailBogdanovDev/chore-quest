@@ -28,7 +28,6 @@
 .card h2 { margin-top: 0; }
 .link { background: none; border: 0; color: var(--gold); font: inherit; text-decoration: underline; cursor: pointer; padding: 10px; justify-self: center; display: block; margin: 0 auto; }
 .px-panel .link { color: var(--wood-mid); }
-.version { text-align: center; font-size: 12px; opacity: .6; margin: 14px 0 0; }
 .err { color: var(--blood); font-weight: 700; margin: 6px 0; }
 .err.on-dark { color: #ff9a8c; text-shadow: 0 2px 0 var(--ink); }
 .muted { opacity: .75; font-size: 15px; margin: 6px 0; }
@@ -54,7 +53,6 @@
 .title__btns { display: grid; gap: 6px; margin-bottom: 12px; }
 .title__btns .px-btn { min-height: 64px; font-size: 22px; }
 .title__panel { margin-bottom: 12px; }
-.title .version { color: #fff; text-shadow: 0 2px 0 var(--ink); }
 
 /* Parent shell */
 .parent { max-width: 480px; margin: 0 auto; padding-top: 10px; }

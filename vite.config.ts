@@ -6,10 +6,6 @@ import { VitePWA } from 'vite-plugin-pwa'
 const API_CACHE = 'supabase-api'
 
 export default defineConfig({
-  define: {
-    // Vercel sets VERCEL_GIT_COMMIT_SHA at build time; shown in the app so a deploy is easy to spot.
-    __APP_VERSION__: JSON.stringify(process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? 'dev'),
-  },
   plugins: [
     react(),
     VitePWA({
