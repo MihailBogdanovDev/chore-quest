@@ -82,7 +82,6 @@ export function ParentHome() {
       {tab === 'quests' && <Quests data={full} now={now} />}
       {tab === 'merchant' && <Merchant data={full} />}
       {tab === 'family' && <Family data={full} />}
-      <p className="version">version {__APP_VERSION__}</p>
       <TabBar
         active={tab}
         onChange={(t) => setTab(t as Tab)}
