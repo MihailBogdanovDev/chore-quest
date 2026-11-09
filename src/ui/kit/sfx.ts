@@ -54,7 +54,6 @@ export const sfx = {
   slash: () => play([{ f: 900, slide: 150, d: 0.12, t: 'sawtooth', g: 0.07 }, { f: 120, d: 0.08, t: 'square' }]),
   coin: () => play([{ f: 988, d: 0.07 }, { f: 1319, d: 0.2 }]),
   levelUp: () => play([523, 659, 784, 1047, 784, 1047].map((f, i) => ({ f, d: i > 4 ? 0.3 : 0.1 }))),
-  chest: () => play([{ f: 220, d: 0.1, t: 'triangle' }, { f: 330, d: 0.1, t: 'triangle' }, { f: 523, d: 0.1 }, { f: 659, d: 0.1 }, { f: 784, d: 0.1 }, { f: 1047, d: 0.3 }]),
   click: () => play([{ f: 440, d: 0.04, g: 0.05 }]),
   error: () => play([{ f: 180, d: 0.12, t: 'sawtooth' }, { f: 120, d: 0.2, t: 'sawtooth' }]),
 };

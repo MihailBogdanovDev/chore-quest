@@ -16,7 +16,7 @@ export interface Quest {
   status: QuestStatus
   claimedAt: number | null
   approvedAt: number | null
-  /** Bonus gold from the loot chest dropped on approval, if any. */
+  /** Bonus gold from a loot chest on approvals made before chests were removed. */
   chestGold: number | null
 }
 
